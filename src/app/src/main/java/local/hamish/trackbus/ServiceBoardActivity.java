@@ -46,14 +46,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import java.util.Arrays;
 
-public class ServiceBoardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
-
-    // Intents for tracker
-    public final static String EXTRA_TRIP_ID = "local.hamish.trackbus.TRIP_ID";
-    public final static String EXTRA_STOP_SEQ = "local.hamish.trackbus.STOP_SEQ";
-    public final static String EXTRA_ROUTE = "local.hamish.trackbus.ROUTE";
-    public final static String EXTRA_STOP = "local.hamish.trackbus.STOP";
-    public final static String EXTRA_SCH_DATE = "local.hamish.trackbus.SCH_DATE";
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
     // Miscellaneous vars
     public String stopID = null;
@@ -287,16 +280,6 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
         }
     }
 

@@ -24,10 +24,7 @@ import android.widget.Toast;
 import com.mobeta.android.dslv.DragSortListView;
 import java.util.Arrays;
 
-public class FavouritesActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-
-    public final static String EXTRA_STOP = "local.hamish.trackbus.STOP_ID";
-    public final static String EXTRA_STOP_NAME = "local.hamish.trackbus.STOP_NAME";
+public class FavouritesActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public int listCount = 0;
     public String[] stopArray = new String[100];
@@ -153,16 +150,6 @@ public class FavouritesActivity extends AppCompatActivity implements NavigationV
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.getMenu().getItem(0).setChecked(false);
         navigationView.getMenu().getItem(1).setChecked(true);
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
     }
 
     // Reads from favourites table in database into array

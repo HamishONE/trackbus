@@ -52,7 +52,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 
-public class TrackerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
+public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
     private static final int timeDelay = 2000; //ms
 
@@ -159,17 +159,6 @@ public class TrackerActivity extends AppCompatActivity implements NavigationView
         callApi();
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            stopCode();
-            super.onBackPressed();
-        }
-    }
-
     @Override // Creates action bar
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -200,7 +189,6 @@ public class TrackerActivity extends AppCompatActivity implements NavigationView
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         Intent intent = null;
