@@ -48,9 +48,6 @@ import java.util.Arrays;
 
 public class ServiceBoardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
-    /* CURRENTLY USING at.govt.nz FOR OLD DATA */
-    private TraditionalApiBoard oldApiBoard;
-
     // Intents for tracker
     public final static String EXTRA_TRIP_ID = "local.hamish.trackbus.TRIP_ID";
     public final static String EXTRA_STOP_SEQ = "local.hamish.trackbus.STOP_SEQ";
@@ -63,7 +60,6 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
     public static String stopName = null; // static to support changing fragment header
     private Menu myMenu = null;
     private boolean showTerminating = false;
-    //private SwipeRefreshLayout swipeLayout;
     private GoogleMap map;
     private boolean firstTime = true;
     RecentStops recentStops;
@@ -72,6 +68,7 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
     // Helper objects
     private FavouritesHelper favouritesHelper;
     private NewApiBoard newApiBoard;
+    private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
     public NewApiBoard.Output out = new NewApiBoard.Output();
 
