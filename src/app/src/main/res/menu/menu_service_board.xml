@@ -20,10 +20,10 @@
         android:checked="false"
         android:visible="true" />
 
-    <group
+        <group
         android:id="@+id/source_group"
-        android:checkableBehavior="single"
         app:showAsAction="never"
+        android:checkableBehavior="single"
         android:orderInCategory="3"
         android:visible="false" >
 
@@ -31,8 +31,7 @@
             android:title="Use maxx.co.nz" />
 
         <item android:id="@+id/useAT"
-            android:title="Use at.govt.nz"
-            android:checked="true"/>
+            android:title="Use at.govt.nz" />
 
     </group>
 

@@ -49,7 +49,7 @@ import java.util.Arrays;
 public class ServiceBoardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
     /* CURRENTLY USING at.govt.nz FOR OLD DATA */
-    private DeparturesApiBoard oldApiBoard;
+    private TraditionalApiBoard oldApiBoard;
 
     // Intents for tracker
     public final static String EXTRA_TRIP_ID = "local.hamish.trackbus.TRIP_ID";
@@ -75,8 +75,6 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
     public AllBusesHelper allBusesHelper;
     public NewApiBoard.Output out = new NewApiBoard.Output();
 
-    // For tabbed layout
-    private DemoCollectionPagerAdapter mDemoCollectionPagerAdapter;
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
 
@@ -86,7 +84,7 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
         setContentView(R.layout.activity_service_board);
 
         // Setup tabs
-        mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(getSupportFragmentManager());
+        DemoCollectionPagerAdapter mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mDemoCollectionPagerAdapter);
         mViewPager.setOffscreenPageLimit(3);
@@ -145,14 +143,28 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
         // Read terminating visibility
         SharedPreferences settings = getPreferences(0);
         showTerminating = settings.getBoolean("showTerminating", false);
+        boolean useMaxx = settings.getBoolean("useMaxx", false);
 
-        //SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         favouritesHelper = new FavouritesHelper(myDB, this);
 
         newApiBoard = new NewApiBoard(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
-        oldApiBoard = new DeparturesApiBoard(this, stopID);
+
+        if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
+        else oldApiBoard = new TraditionalApiBoard_at_govt_nz(this, stopID);
         oldApiBoard.callAPI();
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+        SharedPreferences settings = getPreferences(0);
+        boolean useMaxx = settings.getBoolean("useMaxx", false);
+        if (useMaxx) menu.findItem(R.id.useMaxx).setChecked(true);
+        else menu.findItem(R.id.useAT).setChecked(true);
+
+        return true;
     }
 
     @Override // Update data on restart
@@ -172,7 +184,6 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
         active = false;
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         Intent intent = null;
@@ -266,6 +277,16 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
                 onBackPressed();
                 return true;
 
+            case R.id.useMaxx:
+                changeTraditionalSource(true);
+                item.setChecked(true);
+                return true;
+
+            case R.id.useAT:
+                changeTraditionalSource(false);
+                item.setChecked(true);
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -290,6 +311,22 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.getMenu().getItem(0).setChecked(false);
         navigationView.getMenu().getItem(1).setChecked(false);
+    }
+
+    private void changeTraditionalSource(boolean useMaxx) {
+
+        SharedPreferences settings = getPreferences(0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("useMaxx", useMaxx);
+        editor.apply();
+
+        if (useMaxx) {
+            oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
+        } else {
+            oldApiBoard = new TraditionalApiBoard_at_govt_nz(this, stopID);
+        }
+
+        updateData(false);
     }
 
     // Add current stop to favourites table in database
