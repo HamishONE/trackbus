@@ -20,6 +20,7 @@ public class AdvancedApiBoard_private_api extends AdvancedApiBoard {
     }
 
     // Call APIs
+    @Override
     public void callAPIs() {
         getTripData(ATApi.data.apiRoot + ATApi.data.stopInfo + stopID + ATApi.getAuthorization(), true);
     }
@@ -227,6 +228,7 @@ public class AdvancedApiBoard_private_api extends AdvancedApiBoard {
     }
 
     // Refreshes all data
+    @Override
     public void updateData() {
         tripData = null;
         stopData = null;
@@ -235,6 +237,7 @@ public class AdvancedApiBoard_private_api extends AdvancedApiBoard {
     }
 
     // Refreshes board to show/hide terminating services
+    @Override
     public void changeTerminating(boolean showTerminating) {
         this.showTerminating = showTerminating;
         produceBoard(true, false);

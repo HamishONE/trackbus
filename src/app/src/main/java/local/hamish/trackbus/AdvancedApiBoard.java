@@ -26,7 +26,9 @@ public abstract class AdvancedApiBoard {
 
     public abstract void callAPIs();
 
-    public abstract void updateData();
+    public void updateData() {
+        callAPIs();
+    }
 
     public abstract void changeTerminating(boolean showTerminating);
 

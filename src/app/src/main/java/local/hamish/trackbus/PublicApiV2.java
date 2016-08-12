@@ -9,7 +9,7 @@ public final class PublicApiV2 {
     public final static class data {
         final static String apiRoot = "https://api.at.govt.nz/v2/public/";
 
-        final static String headerTerm = "Ocp-Apim-Subscription-Key: ";
+        final static String headerTerm = "Ocp-Apim-Subscription-Key";
         final static String primaryKey = "fd2c776a9b0543d9b5e3fba4a2e25576";
         final static String secondaryKey = "8f65bac859494abf9a8808983a3c8ab5";
 

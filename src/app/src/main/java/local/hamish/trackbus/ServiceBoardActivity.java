@@ -145,6 +145,7 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
         favouritesHelper = new FavouritesHelper(myDB, this);
 
         newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
+        //newApiBoard = new AdvancedApiBoard_public_api(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
 
         if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
