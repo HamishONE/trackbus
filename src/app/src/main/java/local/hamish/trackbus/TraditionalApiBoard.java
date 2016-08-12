@@ -1,13 +1,15 @@
 package local.hamish.trackbus;
 
+import android.content.Context;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.view.View;
+
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class TraditionalApiBoard {
@@ -16,9 +18,9 @@ public abstract class TraditionalApiBoard {
     public int count = 0;
     public boolean active = true;
 
-    private ServiceBoardActivity serviceBoardActivity;
-    private JSONArray boardData = null;
-    private String stopID;
+    protected ServiceBoardActivity serviceBoardActivity;
+    protected JSONArray boardData = null;
+    protected String stopID;
 
     // Constructor
     public TraditionalApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID) {
@@ -38,7 +40,7 @@ public abstract class TraditionalApiBoard {
     public abstract void produceBoard();
 
     // Get trip data for one stop
-    private void getBoardData(String urlString) {
+    protected void getBoardData(String urlString) {
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -57,6 +59,7 @@ public abstract class TraditionalApiBoard {
             @Override
             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
                 Log.e("HTTP Error", statusCode + " " + error.getMessage());
+                handleError(statusCode);
             }
         });
     }
@@ -86,6 +89,32 @@ public abstract class TraditionalApiBoard {
         public int compareTo(Items o) {
             return scheduledDate.compareTo(o.scheduledDate);
         }
+    }
+
+    // Show snackbar and allow refreshing on HTTP failure
+    private void handleError(int statusCode) {
+        View circle = serviceBoardActivity.findViewById(R.id.loadingPanelOld);
+        if (circle == null) {
+            Log.e("Early exit", "from handleError in NewApiBoard class");
+            return;
+        }
+        circle.setVisibility(View.GONE);
+        // Prepare message for snackbar
+        String message;
+        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
+            message = "Please connect to the internet";
+        else if (statusCode == 0) message = "Network error (no response)";
+        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
+        else message = String.format("Network error (HTTP response %d)", statusCode);
+        // Show snackbar
+        if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
+        View view = serviceBoardActivity.findViewById(R.id.cordLayout);
+        serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+        serviceBoardActivity.snackbar.setAction("Retry", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {serviceBoardActivity.updateData(true);}
+        });
+        serviceBoardActivity.snackbar.show();
     }
 
 }

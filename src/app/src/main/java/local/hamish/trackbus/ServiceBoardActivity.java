@@ -49,7 +49,7 @@ import java.util.Arrays;
 public class ServiceBoardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
     /* CURRENTLY USING at.govt.nz FOR OLD DATA */
-    private DeparturesApiBoard oldApiBoard;
+    private TraditionalApiBoard oldApiBoard;
 
     // Intents for tracker
     public final static String EXTRA_TRIP_ID = "local.hamish.trackbus.TRIP_ID";
@@ -151,7 +151,7 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
         newApiBoard = new NewApiBoard(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
-        oldApiBoard = new DeparturesApiBoard(this, stopID);
+        oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         oldApiBoard.callAPI();
     }
 
