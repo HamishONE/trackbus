@@ -1,0 +1,39 @@
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="local.hamish.trackbus.ServiceBoardActivity">
+
+    <item
+        android:id="@+id/action_favourites"
+        android:orderInCategory="1"
+        android:title="@string/board_change_favourite"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/heart_icon_hollow" />
+
+    <item
+        android:id="@+id/action_terminating"
+        android:orderInCategory="2"
+        android:title="@string/board_show_terminating"
+        app:showAsAction="never"
+        android:checkable="true"
+        android:checked="false"
+        android:visible="true" />
+
+    <group
+        android:id="@+id/source_group"
+        android:checkableBehavior="single"
+        app:showAsAction="never"
+        android:orderInCategory="3"
+        android:visible="false" >
+
+        <item android:id="@+id/useMaxx"
+            android:title="Use maxx.co.nz" />
+
+        <item android:id="@+id/useAT"
+            android:title="Use at.govt.nz"
+            android:checked="true"/>
+
+    </group>
+
+</menu>

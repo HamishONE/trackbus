@@ -1,0 +1,33 @@
+<resources>
+
+    <!-- Other -->
+    <string name="app_name">Akl PT Tracker</string>
+    <string name="google_app_id" translatable="false">1084282840745</string>
+
+    <!-- Home screen -->
+    <string name="stop_entry_hint">Enter Stop</string>
+    <string name="stop_button_send">Go</string>
+    <string name="refresh_stops">Refresh stops list</string>
+
+    <!-- Service Board -->
+    <string name="title_activity_service_board">Loading</string>
+    <string name="service_board_header">"Route     Scheduled     Stops    Due"</string>
+    <string name="board_show_terminating">Show terminating services</string>
+    <string name="board_change_favourite">Add Favourite</string>
+    <string name="board_change_source">Use maxx.co.nz</string>
+
+    <!-- Tracker -->
+    <string name="title_activity_tracker" translatable="false">""</string>
+    <string name="tracker_info_line" translatable="false">""</string>
+
+    <!-- Favourites -->
+    <string name="title_activity_favourites">My Favourites</string>
+    <string name="favourites_header">"Stop    Name"</string>
+    <string name="clear_favourites">Clear Favourites</string>
+    <string name="title_activity_test">TestActivity</string>
+
+    <!-- Hamburger menu -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+</resources>

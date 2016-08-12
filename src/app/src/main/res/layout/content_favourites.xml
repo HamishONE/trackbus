@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="@layout/activity_service_board" >
+
+    <com.mobeta.android.dslv.DragSortListView
+
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#E5E5E5"
+
+        xmlns:dslv="http://schemas.android.com/apk/res-auto"
+        dslv:drag_enabled="true"
+        dslv:drag_handle_id="@id/drag"
+        dslv:collapsed_height="2dp"
+        dslv:drag_scroll_start="0.33"
+        dslv:max_drag_scroll_speed="0.5"
+        dslv:float_alpha="0.6"
+        dslv:slide_shuffle_speed="0.3"
+        dslv:track_drag_sort="true"
+        dslv:use_default_controller="true"
+        dslv:sort_enabled="true"
+        dslv:remove_enabled="true"
+        dslv:remove_mode="flingRemove" />
+
+</RelativeLayout>

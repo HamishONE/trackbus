@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/go_main"
+            android:icon="@drawable/map_icon"
+            android:title="Find a stop" />
+        <item
+            android:id="@+id/go_favs"
+            android:icon="@drawable/heart_icon_filled"
+            android:title="Favourite stops" />
+    </group>
+
+    <item android:title="Recent Stops">
+        <menu android:id="@+id/recent_stops">
+            <item
+                android:id="@+id/bus1"
+                android:title=""
+                android:visible="false" />
+            <item
+                android:id="@+id/bus2"
+                android:title=""
+                android:visible="false" />
+            <item
+                android:id="@+id/bus3"
+                android:title=""
+                android:visible="false" />
+            <item
+                android:id="@+id/bus4"
+                android:title=""
+                android:visible="false" />
+            <item
+                android:id="@+id/bus5"
+                android:title=""
+                android:visible="false" />
+        </menu>
+    </item>
+
+</menu>
