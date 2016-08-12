@@ -1,9 +1,6 @@
 package local.hamish.trackbus;
 
-import android.content.Context;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
-import android.view.View;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
@@ -13,25 +10,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class NewApiBoard {
+public class AdvancedApiBoard_private_api extends AdvancedApiBoard {
 
-    private ServiceBoardActivity serviceBoardActivity;
     private JSONArray tripData = null;
     private JSONArray stopData = null;
-    private String stopID;
-    private String stopName;
-    private boolean showTerminating;
-    private Output out;
-    public boolean active = true;
 
-    // Constructor
-    public NewApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
-                       boolean showTerminating, Output out) {
-        this.serviceBoardActivity = serviceBoardActivity;
-        this.stopID = stopID;
-        this.stopName = stopName;
-        this.showTerminating = showTerminating;
-        this.out = out;
+    public AdvancedApiBoard_private_api(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName, boolean showTerminating, Output out) {
+        super(serviceBoardActivity, stopID, stopName, showTerminating, out);
     }
 
     // Call APIs
@@ -40,7 +25,7 @@ public class NewApiBoard {
     }
 
     // Extract trip ids relevant to route from tripData and call stopData for these
-    public void getStopData() {
+    private void getStopData() {
         String tripsForApi = "&tripid=";
         int i;
         for (i = 0; i < tripData.length(); i++) {
@@ -56,7 +41,7 @@ public class NewApiBoard {
     }
 
     // Continues with code after network responds
-    public void produceBoard(boolean incStops, boolean isNew) {
+    private void produceBoard(boolean incStops, boolean isNew) {
 
         int stopsAway = 0;
         String stopsAwayStr = "";
@@ -241,35 +226,6 @@ public class NewApiBoard {
         });
     }
 
-    // Show snackbar and allow refreshing on HTTP failure
-    private void handleError(int statusCode) {
-        serviceBoardActivity.prepareMap();
-        serviceBoardActivity.allBusesHelper.handleError(statusCode);
-
-        View circle = serviceBoardActivity.findViewById(R.id.loadingPanelNew);
-        if (circle == null) {
-            Log.e("Early exit", "from handleError in NewApiBoard class");
-            return;
-        }
-        circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
-        // Show snackbar
-        if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
-        View view = serviceBoardActivity.findViewById(R.id.cordLayout);
-        serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
-        serviceBoardActivity.snackbar.setAction("Retry", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {serviceBoardActivity.updateData(true);}
-        });
-        serviceBoardActivity.snackbar.show();
-    }
-
     // Refreshes all data
     public void updateData() {
         tripData = null;
@@ -282,26 +238,6 @@ public class NewApiBoard {
     public void changeTerminating(boolean showTerminating) {
         this.showTerminating = showTerminating;
         produceBoard(true, false);
-    }
-
-    // Object for outputs
-    public static class Output {
-
-        public String listArray[] = new String[1000];
-        public int stopSeqArray[] = new int[1000];
-        public String routeArray[] = new String[1000];
-        public String tripArray[] = new String[1000];
-        public String headsignArray[] = new String[1000];
-        public String schTimeArray[] = new String[1000];
-        public String stopsAwayArray[] = new String[1000];
-        public String dueTimeArray[] = new String[1000];
-        public boolean terminatingArray[] = new boolean[1000];
-        public boolean scheduledArray[] = new boolean[1000];
-        public long dateSchArray[] = new long[1000];
-        public int count = 0;
-
-        public Output() {}
-
     }
 
 }

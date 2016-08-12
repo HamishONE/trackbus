@@ -67,10 +67,10 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
     // Helper objects
     private FavouritesHelper favouritesHelper;
-    private NewApiBoard newApiBoard;
+    private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public NewApiBoard.Output out = new NewApiBoard.Output();
+    public AdvancedApiBoard_private_api.Output out = new AdvancedApiBoard_private_api.Output();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
@@ -144,7 +144,7 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
         favouritesHelper = new FavouritesHelper(myDB, this);
 
-        newApiBoard = new NewApiBoard(this, stopID, stopName, showTerminating, out);
+        newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
 
         if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);

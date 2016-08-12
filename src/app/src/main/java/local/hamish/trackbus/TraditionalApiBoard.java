@@ -89,7 +89,7 @@ public abstract class TraditionalApiBoard {
     private void handleError(int statusCode) {
         View circle = serviceBoardActivity.findViewById(R.id.loadingPanelOld);
         if (circle == null) {
-            Log.e("Early exit", "from handleError in NewApiBoard class");
+            Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
             return;
         }
         circle.setVisibility(View.GONE);

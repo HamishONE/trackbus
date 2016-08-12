@@ -29,7 +29,7 @@ public class AllBusesHelper {
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
     private FavouritesHelper favouritesHelper;
-    private NewApiBoard.Output out;
+    private AdvancedApiBoard_private_api.Output out;
 
     private HashMap<Marker, Integer> mHashMap = new HashMap<Marker, Integer>();
 
@@ -42,7 +42,7 @@ public class AllBusesHelper {
     }
 
     // Calls the API
-    public void callAPI(NewApiBoard.Output out) {
+    public void callAPI(AdvancedApiBoard_private_api.Output out) {
         this.tripsArray = out.tripArray;
         this.routesArray = out.routeArray;
         this.stopSeqArray = out.stopSeqArray;
@@ -153,7 +153,7 @@ public class AllBusesHelper {
     public void handleError(int statusCode) {
         View circle = serviceBoardActivity.findViewById(R.id.loadingPanelMap);
         if (circle == null) {
-            Log.e("Early exit", "from handleError in NewApiBoard class");
+            Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
             return;
         }
         circle.setVisibility(View.GONE);
