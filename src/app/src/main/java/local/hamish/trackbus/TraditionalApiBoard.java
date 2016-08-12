@@ -45,15 +45,7 @@ public abstract class TraditionalApiBoard {
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
-                try {
-                    String str = new String(responseBody);
-                    JSONObject jsonObject = new JSONObject(str);
-                    boardData = jsonObject.getJSONArray("Movements");
-                    produceBoard();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Log.e("boardData error", "");
-                }
+                extractJsonArray(new String(responseBody));
             }
 
             @Override
@@ -63,6 +55,8 @@ public abstract class TraditionalApiBoard {
             }
         });
     }
+
+    protected abstract void extractJsonArray(String str);
 
     // Refreshes all data
     public void updateData() {

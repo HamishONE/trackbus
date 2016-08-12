@@ -1,6 +1,10 @@
 package local.hamish.trackbus;
 
+import android.util.Log;
+
 import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,6 +59,18 @@ public class TraditionalApiBoard_maxx_co_nz extends TraditionalApiBoard {
         }
 
         if (active) serviceBoardActivity.produceViewOld();
+    }
+
+    @Override
+    protected void extractJsonArray(String str) {
+        try {
+            JSONObject jsonObject = new JSONObject(str);
+            boardData = jsonObject.getJSONArray("Movements");
+            produceBoard();
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.e("boardData error", "");
+        }
     }
 
 }

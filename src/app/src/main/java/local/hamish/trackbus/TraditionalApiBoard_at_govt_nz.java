@@ -1,6 +1,8 @@
 package local.hamish.trackbus;
 
 import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -56,6 +58,17 @@ public class TraditionalApiBoard_at_govt_nz extends TraditionalApiBoard {
             } catch (JSONException e) {e.printStackTrace();}
         }
         if (active) serviceBoardActivity.produceViewOld();
+    }
+
+    @Override
+    protected void extractJsonArray(String str) {
+        try {
+            JSONObject jsonObject = new JSONObject(str);
+            boardData = jsonObject.getJSONObject("response").getJSONArray("movements");
+            produceBoard();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     // Changes string into seconds since epoch
