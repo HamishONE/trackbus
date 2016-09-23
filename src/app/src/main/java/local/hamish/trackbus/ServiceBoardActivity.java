@@ -46,24 +46,13 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import java.util.Arrays;
 
-public class ServiceBoardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener  {
-
-    /* CURRENTLY USING at.govt.nz FOR OLD DATA */
-    private TraditionalApiBoard oldApiBoard;
-
-    // Intents for tracker
-    public final static String EXTRA_TRIP_ID = "local.hamish.trackbus.TRIP_ID";
-    public final static String EXTRA_STOP_SEQ = "local.hamish.trackbus.STOP_SEQ";
-    public final static String EXTRA_ROUTE = "local.hamish.trackbus.ROUTE";
-    public final static String EXTRA_STOP = "local.hamish.trackbus.STOP";
-    public final static String EXTRA_SCH_DATE = "local.hamish.trackbus.SCH_DATE";
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
     // Miscellaneous vars
     public String stopID = null;
     public static String stopName = null; // static to support changing fragment header
     private Menu myMenu = null;
     private boolean showTerminating = false;
-    //private SwipeRefreshLayout swipeLayout;
     private GoogleMap map;
     private boolean firstTime = true;
     RecentStops recentStops;
@@ -71,9 +60,10 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
     // Helper objects
     private FavouritesHelper favouritesHelper;
-    private NewApiBoard newApiBoard;
+    private AdvancedApiBoard newApiBoard;
+    private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public NewApiBoard.Output out = new NewApiBoard.Output();
+    public AdvancedApiBoard_private_api.Output out = new AdvancedApiBoard_private_api.Output();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
@@ -147,7 +137,8 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
         favouritesHelper = new FavouritesHelper(myDB, this);
 
-        newApiBoard = new NewApiBoard(this, stopID, stopName, showTerminating, out);
+        //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
+        newApiBoard = new AdvancedApiBoard_public_api(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
 
         if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
@@ -289,16 +280,6 @@ public class ServiceBoardActivity extends AppCompatActivity implements Navigatio
 
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
         }
     }
 

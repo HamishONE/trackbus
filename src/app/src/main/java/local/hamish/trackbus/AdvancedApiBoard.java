@@ -4,28 +4,31 @@ import android.content.Context;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
+
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class NewApiBoard {
+public abstract class AdvancedApiBoard {
 
-    private ServiceBoardActivity serviceBoardActivity;
-    private JSONArray tripData = null;
-    private JSONArray stopData = null;
-    private String stopID;
-    private String stopName;
-    private boolean showTerminating;
-    private Output out;
+    protected ServiceBoardActivity serviceBoardActivity;
+    protected String stopID;
+    protected String stopName;
+    protected boolean showTerminating;
+    protected Output out;
     public boolean active = true;
+    protected JSONArray tripData = null;
+    protected JSONArray stopData = null;
 
     // Constructor
-    public NewApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
+    protected AdvancedApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
                        boolean showTerminating, Output out) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.stopID = stopID;
@@ -34,29 +37,65 @@ public class NewApiBoard {
         this.out = out;
     }
 
-    // Call APIs
-    public void callAPIs() {
-        getTripData(ATApi.data.apiRoot + ATApi.data.stopInfo + stopID + ATApi.getAuthorization(), true);
+    protected abstract String getTripDataUrl();
+    protected abstract String getStopDataUrl();
+
+    // Get trip data for one stop
+    protected void getTripData(final boolean isNew) {
+        final String urlString = getTripDataUrl();
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
+        client.get(urlString, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
+                try {
+                    String str = new String(responseBody);
+                    JSONObject jsonObject = new JSONObject(str);
+
+                    tripData = jsonObject.getJSONArray("response");
+                    getStopDataWithTripIDs();
+                    produceBoard(false, isNew);
+                } catch (JSONException e) {e.printStackTrace();}
+            }
+
+            @Override
+            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e("HTTP Error", statusCode + " " + error.getMessage());
+                handleError(statusCode);
+            }
+        });
     }
 
-    // Extract trip ids relevant to route from tripData and call stopData for these
-    public void getStopData() {
-        String tripsForApi = "&tripid=";
-        int i;
-        for (i = 0; i < tripData.length(); i++) {
-            try {
-                tripsForApi += tripData.getJSONObject(i).getString("trip_id");
-                tripsForApi += ",";
-                out.tripArray[i] = tripData.getJSONObject(i).getString("trip_id");
-            } catch (JSONException e) {e.printStackTrace();}
-        }
-        out.count = i;
-        if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
-        getStopData(ATApi.data.apiRoot + ATApi.data.tripUpdates + ATApi.getAuthorization() + tripsForApi);
+    // Get all stop data
+    protected void getStopData(final String tripIDs) {
+        final String urlString = getStopDataUrl() + tripIDs;
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
+        client.get(urlString, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
+                try {
+                    ATApi.errorCount = 0;
+                    String str = new String(responseBody);
+                    JSONObject jsonObject = new JSONObject(str);
+                    stopData = jsonObject.getJSONObject("response").getJSONArray("entity");
+
+                } catch (JSONException e) {e.printStackTrace();}
+                // Refresh board with new data
+                out.count = 0;
+                produceBoard(true, true);
+            }
+
+            @Override
+            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e("HTTP Error", statusCode + " " + error.getMessage());
+                handleError(statusCode);
+            }
+        });
     }
 
     // Continues with code after network responds
-    public void produceBoard(boolean incStops, boolean isNew) {
+    protected void produceBoard(boolean incStops, boolean isNew) {
 
         int stopsAway = 0;
         String stopsAwayStr = "";
@@ -191,83 +230,24 @@ public class NewApiBoard {
         if (active && incStops) serviceBoardActivity.allBusesHelper.simplify(out.tripArray, out.routeArray, out.stopSeqArray);
     }
 
-    // Get trip data for one stop
-    private void getTripData(final String urlString, final boolean isNew) {
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(urlString, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
-                try {
-                    String str = new String(responseBody);
-                    JSONObject jsonObject = new JSONObject(str);
-
-                    tripData = jsonObject.getJSONArray("response");
-                    getStopData();
-                    produceBoard(false, isNew);
-                } catch (JSONException e) {e.printStackTrace();}
-            }
-
-            @Override
-            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
-                Log.e("HTTP Error", statusCode + " " + error.getMessage());
-                handleError(statusCode);
-            }
-        });
-    }
-
-    // Get all stop data
-    private void getStopData(final String urlString) {
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(urlString, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
-                try {
-                    ATApi.errorCount = 0;
-                    String str = new String(responseBody);
-                    JSONObject jsonObject = new JSONObject(str);
-                    stopData = jsonObject.getJSONObject("response").getJSONArray("entity");
-
-                } catch (JSONException e) {e.printStackTrace();}
-                // Refresh board with new data
-                out.count = 0;
-                produceBoard(true, true);
-            }
-
-            @Override
-            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
-                Log.e("HTTP Error", statusCode + " " + error.getMessage());
-                handleError(statusCode);
-            }
-        });
-    }
-
-    // Show snackbar and allow refreshing on HTTP failure
-    private void handleError(int statusCode) {
-        serviceBoardActivity.prepareMap();
-        serviceBoardActivity.allBusesHelper.handleError(statusCode);
-
-        View circle = serviceBoardActivity.findViewById(R.id.loadingPanelNew);
-        if (circle == null) {
-            Log.e("Early exit", "from handleError in NewApiBoard class");
-            return;
+    // Extract trip ids relevant to route from tripData and call stopData for these
+    protected void getStopDataWithTripIDs() {
+        String tripsForApi = "tripid=";
+        int i;
+        for (i = 0; i < tripData.length(); i++) {
+            try {
+                tripsForApi += tripData.getJSONObject(i).getString("trip_id");
+                tripsForApi += ",";
+                out.tripArray[i] = tripData.getJSONObject(i).getString("trip_id");
+            } catch (JSONException e) {e.printStackTrace();}
         }
-        circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
-        // Show snackbar
-        if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
-        View view = serviceBoardActivity.findViewById(R.id.cordLayout);
-        serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
-        serviceBoardActivity.snackbar.setAction("Retry", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {serviceBoardActivity.updateData(true);}
-        });
-        serviceBoardActivity.snackbar.show();
+        out.count = i;
+        if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
+        getStopData(tripsForApi);
+    }
+
+    public void callAPIs() {
+        getTripData(true);
     }
 
     // Refreshes all data
@@ -275,7 +255,7 @@ public class NewApiBoard {
         tripData = null;
         stopData = null;
         out.count = 0;
-        getTripData(ATApi.data.apiRoot + ATApi.data.stopInfo + stopID + ATApi.getAuthorization(), false);
+        getTripData(false);
     }
 
     // Refreshes board to show/hide terminating services
@@ -304,4 +284,32 @@ public class NewApiBoard {
 
     }
 
+    // Show snackbar and allow refreshing on HTTP failure
+    protected void handleError(int statusCode) {
+        serviceBoardActivity.prepareMap();
+        serviceBoardActivity.allBusesHelper.handleError(statusCode);
+
+        View circle = serviceBoardActivity.findViewById(R.id.loadingPanelNew);
+        if (circle == null) {
+            Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
+            return;
+        }
+        circle.setVisibility(View.GONE);
+        // Prepare message for snackbar
+        String message;
+        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
+            message = "Please connect to the internet";
+        else if (statusCode == 0) message = "Network error (no response)";
+        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
+        else message = String.format("Network error (HTTP response %d)", statusCode);
+        // Show snackbar
+        if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
+        View view = serviceBoardActivity.findViewById(R.id.cordLayout);
+        serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+        serviceBoardActivity.snackbar.setAction("Retry", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {serviceBoardActivity.updateData(true);}
+        });
+        serviceBoardActivity.snackbar.show();
+    }
 }
