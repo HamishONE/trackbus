@@ -7,43 +7,60 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Date;
 
-public final class ATApi {
+class ATApi {
 
-    // Blank
-    private ATApi() {}
-
-    // Global vars
+    private enum API_VERSION {APIv1, APIv2}
+    private static API_VERSION currentApiVersion = API_VERSION.APIv2; //todo:replace with setting;
     private static int drift = 0;
-    public static int errorCount = 0;
+    static int errorCount = 0;
 
-    // Important strings from AT Track My Bus App
-    public final static class data {
-        final static String apiRoot = "https://api.at.govt.nz/v1/";
-        final static String apiKey = "1e6069be9fa8e5f7aa3fbcee39a783e6";
-        final static String sharedSecret = "3843d5c0be9dc71e3a547d16bf2fcc9c";
+    public static class data {
+
+        static String apiRoot() {
+            if (currentApiVersion == API_VERSION.APIv2) {
+                return "https://api.at.govt.nz/v2/";
+            } else  {
+                return "https://api.at.govt.nz/v1/";
+            }
+        }
+
         final static String stopInfo = "gtfs/stops/stopinfo/";
         final static String vehicleLocations = "public-restricted/realtime/vehiclelocations/";
         final static String tripUpdates = "public-restricted/realtime/tripUpdates/";
         final static String realtime = "public-restricted/realtime/";
         final static String shapeByTripId = "gtfs/shapes/tripId/";
         final static String stops = "gtfs/stops";
-        final static String maxxUrl = "http://api.maxx.co.nz/RealTime/v2/Departures/Stop/";
         final static String departures = "public-restricted/departures/";
-        final static String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
     }
 
     // Returns string to append to api call
-    public static String getAuthorization() {
+    static String getAuthorization() {
 
-        long urlTime = new Date().getTime()/1000 + drift;
-        int epoch = (int) Math.floor(urlTime);
-        String signature = Util.hmacSHA1(epoch + ATApi.data.apiKey, ATApi.data.sharedSecret);
-        return "?api_sig=" + signature + "&api_key=" + ATApi.data.apiKey + "&ivu=true";
+        if (currentApiVersion == API_VERSION.APIv2) {
+
+            //final String key = "fd2c776a9b0543d9b5e3fba4a2e25576"; //Hamish primary
+            //final String key = "8f65bac859494abf9a8808983a3c8ab5"; //Hamish secondary
+            final String key = "323741614c1c4b9083299adefe100aa6"; //AT internal
+
+            return "?subscription-key=" + key;
+
+        } else {
+
+            final String apiKey = "1e6069be9fa8e5f7aa3fbcee39a783e6";
+            final String sharedSecret = "3843d5c0be9dc71e3a547d16bf2fcc9c";
+
+            long urlTime = new Date().getTime()/1000 + drift;
+            int epoch = (int) Math.floor(urlTime);
+            String signature = Util.hmacSHA1(epoch + apiKey, sharedSecret);
+            return "?api_sig=" + signature + "&api_key=" + apiKey + "&ivu=true";
+        }
     }
 
     // Gets drift global var
-    public static void getDrift() {
-        getData(data.apiRoot + "time/epoch?api_key=" + data.epochKey);
+    static void getDrift() {
+
+        final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
+        getData(ATApi.data.apiRoot() + "time/epoch?api_key=" + epochKey);
     }
 
     // Finishes getting the drift

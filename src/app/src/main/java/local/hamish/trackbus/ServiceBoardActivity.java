@@ -24,7 +24,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -63,7 +62,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public AdvancedApiBoard_private_api.Output out = new AdvancedApiBoard_private_api.Output();
+    public AdvancedApiBoard.Output out = new AdvancedApiBoard.Output();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
@@ -138,11 +137,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         favouritesHelper = new FavouritesHelper(myDB, this);
 
         //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
-        newApiBoard = new AdvancedApiBoard_public_api(this, stopID, stopName, showTerminating, out);
+        newApiBoard = new AdvancedApiBoard(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
 
-        if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
-        else oldApiBoard = new TraditionalApiBoard_at_govt_nz(this, stopID);
+        // todo: remove maxx setting
+        //if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
+        oldApiBoard = new TraditionalApiBoard(this, stopID);
         oldApiBoard.callAPI();
     }
 
@@ -301,11 +301,11 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         editor.putBoolean("useMaxx", useMaxx);
         editor.apply();
 
-        if (useMaxx) {
+        /*if (useMaxx) {
             oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         } else {
             oldApiBoard = new TraditionalApiBoard_at_govt_nz(this, stopID);
-        }
+        }*/
 
         updateData(false);
     }
@@ -335,9 +335,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (out.tripArray[position] == null) {
+                /*if (out.tripArray[position] == null) {
                     Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
-                } else {
+                } else*/ {
                     callTracker(out.tripArray[position], out.stopSeqArray[position],
                             out.routeArray[position], out.dateSchArray[position]);
                 }
@@ -534,7 +534,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         private final Context context;
         private final String[] values;
 
-        public CustomArrayAdapter(Context context, String[] values) {
+        CustomArrayAdapter(Context context, String[] values) {
             super(context, -1, values);
             this.context = context;
             this.values = values;
@@ -585,7 +585,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         String[] titles = {"Older Source", "Newer Source", "Map View"};
 
-        public DemoCollectionPagerAdapter(FragmentManager fm) {super(fm);}
+        DemoCollectionPagerAdapter(FragmentManager fm) {super(fm);}
 
         @Override // Links tab with class
         public Fragment getItem(int i) {

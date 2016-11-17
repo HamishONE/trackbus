@@ -3,18 +3,18 @@ package local.hamish.trackbus;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-public class FavouritesHelper {
+class FavouritesHelper {
 
-    SQLiteDatabase myDB;
-    ServiceBoardActivity serviceBoardActivity;
+    private SQLiteDatabase myDB;
+    private ServiceBoardActivity serviceBoardActivity;
 
-    public FavouritesHelper(SQLiteDatabase db, ServiceBoardActivity serviceBoardActivity) {
+    FavouritesHelper(SQLiteDatabase db, ServiceBoardActivity serviceBoardActivity) {
         myDB = db;
         this.serviceBoardActivity = serviceBoardActivity;
     }
 
     // Queries database to see if route is a favourite
-    public boolean isFavRoute(String route) {
+    boolean isFavRoute(String route) {
         Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + route + "'", null);
         if (resultSet.getCount() > 0) {
             resultSet.close();
@@ -26,7 +26,7 @@ public class FavouritesHelper {
     }
 
     // Adds or removes route from database and array and redraws list
-    public void changeFavRoute(String route) {
+    void changeFavRoute(String route) {
 
         // Query table for selected route
         Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + route + "'", null);

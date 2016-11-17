@@ -4,31 +4,29 @@ import android.content.Context;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
-
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
-public abstract class AdvancedApiBoard {
+class AdvancedApiBoard {
 
-    protected ServiceBoardActivity serviceBoardActivity;
-    protected String stopID;
-    protected String stopName;
-    protected boolean showTerminating;
-    protected Output out;
-    public boolean active = true;
-    protected JSONArray tripData = null;
-    protected JSONArray stopData = null;
+    private ServiceBoardActivity serviceBoardActivity;
+    private String stopID;
+    private String stopName;
+    private boolean showTerminating;
+    private Output out;
+    boolean active = true;
+    private JSONArray tripData = null;
+    private JSONArray stopData = null;
 
     // Constructor
-    protected AdvancedApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
+    AdvancedApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
                        boolean showTerminating, Output out) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.stopID = stopID;
@@ -37,14 +35,11 @@ public abstract class AdvancedApiBoard {
         this.out = out;
     }
 
-    protected abstract String getTripDataUrl();
-    protected abstract String getStopDataUrl();
-
     // Get trip data for one stop
-    protected void getTripData(final boolean isNew) {
-        final String urlString = getTripDataUrl();
+    private void getTripData(final boolean isNew) {
+        final String urlString = ATApi.data.apiRoot() + ATApi.data.stopInfo + stopID + ATApi.getAuthorization();
         AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
+        //client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
@@ -54,7 +49,7 @@ public abstract class AdvancedApiBoard {
 
                     tripData = jsonObject.getJSONArray("response");
                     getStopDataWithTripIDs();
-                    produceBoard(false, isNew);
+                    produceBoard(isNew);
                 } catch (JSONException e) {e.printStackTrace();}
             }
 
@@ -67,10 +62,10 @@ public abstract class AdvancedApiBoard {
     }
 
     // Get all stop data
-    protected void getStopData(final String tripIDs) {
-        final String urlString = getStopDataUrl() + tripIDs;
+    private void getStopData(final String tripIDs) {
+        final String urlString = ATApi.data.apiRoot() + ATApi.data.tripUpdates + ATApi.getAuthorization() + "&" + tripIDs;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
+        //client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
@@ -83,7 +78,7 @@ public abstract class AdvancedApiBoard {
                 } catch (JSONException e) {e.printStackTrace();}
                 // Refresh board with new data
                 out.count = 0;
-                produceBoard(true, true);
+                produceBoard(true);
             }
 
             @Override
@@ -95,19 +90,21 @@ public abstract class AdvancedApiBoard {
     }
 
     // Continues with code after network responds
-    protected void produceBoard(boolean incStops, boolean isNew) {
+    private void produceBoard(boolean isNew) {
 
-        int stopsAway = 0;
+        if (tripData == null) return;
+        boolean incStops = !(stopData == null);
+
+        int stopsAway;
         String stopsAwayStr = "";
         String dueStr = "";
-        String delayStr = "";
-        String route = "";
-        String tripDataTrip = "";
-        String destination = "";
-        int stopSeq = 0;
-        String schTimeStr = "";
-        Date schTime = null;
-        int delay = 0;
+        String route;
+        String tripDataTrip;
+        String destination ;
+        int stopSeq;
+        String schTimeStr;
+        Date schTime;
+        int delay;
 
         for (int i = 0; i < out.terminatingArray.length; i++) {
             out.terminatingArray[i] = false;
@@ -185,7 +182,7 @@ public abstract class AdvancedApiBoard {
                             out.stopSeqArray[out.count] = stopSeq;
 
                             // Format numbers
-                            dueStr = String.format("%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
+                            dueStr = String.format(Locale.US, "%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
                             stopsAwayStr = stopsAway + "";
                         }
                     } catch (JSONException e) {
@@ -195,7 +192,7 @@ public abstract class AdvancedApiBoard {
                 } else {
 
                     // Add to arrays
-                    out.tripArray[out.count] = null;
+                    out.tripArray[out.count] = tripDataTrip;
                     out.stopSeqArray[out.count] = 100;
 
                     if (schTime.after(new Date())) {
@@ -208,13 +205,15 @@ public abstract class AdvancedApiBoard {
                 }
 
                 // Check for terminating or scheduled service
+                out.scheduledArray[out.count] = false;
+                out.terminatingArray[out.count] = false;
                 if (stopSeq == 1) {
                     out.scheduledArray[out.count] = true;
                 } else if (destination.contains(stopName)) {
-                    out.terminatingArray[out.count] = true;
+                    out.terminatingArray[out.count] = true; //no longer works, consider removing
                 }
 
-                DateFormat df = new SimpleDateFormat("hh:mm a");
+                DateFormat df = new SimpleDateFormat("hh:mm a", Locale.US);
                 String schTimeStrNew = df.format(schTime);
 
                 out.routeArray[out.count] = route;
@@ -231,7 +230,7 @@ public abstract class AdvancedApiBoard {
     }
 
     // Extract trip ids relevant to route from tripData and call stopData for these
-    protected void getStopDataWithTripIDs() {
+    private void getStopDataWithTripIDs() {
         String tripsForApi = "tripid=";
         int i;
         for (i = 0; i < tripData.length(); i++) {
@@ -243,49 +242,48 @@ public abstract class AdvancedApiBoard {
         }
         out.count = i;
         if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
-        getStopData(tripsForApi);
+        //getStopData(tripsForApi);
     }
 
-    public void callAPIs() {
+    void callAPIs() {
         getTripData(true);
+        getStopData(""); //new
     }
 
     // Refreshes all data
-    public void updateData() {
+    void updateData() {
         tripData = null;
         stopData = null;
         out.count = 0;
         getTripData(false);
+        getStopData(""); //new
     }
 
     // Refreshes board to show/hide terminating services
-    public void changeTerminating(boolean showTerminating) {
+    void changeTerminating(boolean showTerminating) {
         this.showTerminating = showTerminating;
-        produceBoard(true, false);
+        produceBoard(false);
     }
 
     // Object for outputs
-    public static class Output {
+    static class Output {
 
-        public String listArray[] = new String[1000];
-        public int stopSeqArray[] = new int[1000];
-        public String routeArray[] = new String[1000];
-        public String tripArray[] = new String[1000];
-        public String headsignArray[] = new String[1000];
-        public String schTimeArray[] = new String[1000];
-        public String stopsAwayArray[] = new String[1000];
-        public String dueTimeArray[] = new String[1000];
-        public boolean terminatingArray[] = new boolean[1000];
-        public boolean scheduledArray[] = new boolean[1000];
-        public long dateSchArray[] = new long[1000];
-        public int count = 0;
-
-        public Output() {}
-
+        String listArray[] = new String[1000];
+        int stopSeqArray[] = new int[1000];
+        String routeArray[] = new String[1000];
+        String tripArray[] = new String[1000];
+        String headsignArray[] = new String[1000];
+        String schTimeArray[] = new String[1000];
+        String stopsAwayArray[] = new String[1000];
+        String dueTimeArray[] = new String[1000];
+        boolean terminatingArray[] = new boolean[1000];
+        boolean scheduledArray[] = new boolean[1000];
+        long dateSchArray[] = new long[1000];
+        int count = 0;
     }
 
     // Show snackbar and allow refreshing on HTTP failure
-    protected void handleError(int statusCode) {
+    private void handleError(int statusCode) {
         serviceBoardActivity.prepareMap();
         serviceBoardActivity.allBusesHelper.handleError(statusCode);
 
@@ -300,8 +298,8 @@ public abstract class AdvancedApiBoard {
         if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
+        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
+        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         // Show snackbar
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);

@@ -11,7 +11,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-public class FavStopsHelper {
+class FavStopsHelper {
 
     private Context app;
     private ServiceBoardActivity parent;
@@ -21,7 +21,7 @@ public class FavStopsHelper {
     private FavouritesActivity favouritesActivity;
     private int pos;
 
-    public FavStopsHelper(Context app, SQLiteDatabase myDB, ServiceBoardActivity parent, String stopID,
+    FavStopsHelper(Context app, SQLiteDatabase myDB, ServiceBoardActivity parent, String stopID,
                           String stopName, FavouritesActivity favouritesActivity) {
         this.app = app;
         this.myDB = myDB;
@@ -31,7 +31,7 @@ public class FavStopsHelper {
         this.favouritesActivity = favouritesActivity;
     }
 
-    public void changeFavourite() {
+    void changeFavourite() {
 
         // Open or create database and create favourites table if needed
         myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
@@ -75,7 +75,7 @@ public class FavStopsHelper {
         parent.changeHeartIcon();
     }
 
-    public void showDialog(int pos, String oldUserName) {
+    void showDialog(int pos, String oldUserName) {
         this.pos = pos;
 
         AlertDialog.Builder builder;

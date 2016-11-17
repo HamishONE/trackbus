@@ -42,6 +42,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private String[][] stops = new String[10000][4];
@@ -326,7 +328,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             dialog = ProgressDialog.show(this, "Downloading stops list", arg2, true);
 
             myDB.execSQL("DELETE FROM Stops;");
-            getStops(ATApi.data.apiRoot + ATApi.data.stops + ATApi.getAuthorization());
+            getStops(ATApi.data.apiRoot() + ATApi.data.stops + ATApi.getAuthorization());
         }
     }
 
@@ -393,8 +395,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
+        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
+        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         // Show snackbar
         View view = findViewById(R.id.cordLayout);
         Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);

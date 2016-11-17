@@ -5,15 +5,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class RecentStops {
+class RecentStops {
 
     private SQLiteDatabase myDB;
-    public int[] stopIDs = new int[5];
-    public String[] stopNames = new String[5];
-    private int count;
+    int[] stopIDs = new int[5];
+    String[] stopNames = new String[5];
     private MenuItem[] menuItems = new MenuItem[5];
 
-    public RecentStops(SQLiteDatabase myDB, Menu menu) {
+    RecentStops(SQLiteDatabase myDB, Menu menu) {
         this.myDB = myDB;
         myDB.execSQL("CREATE TABLE IF NOT EXISTS RecentStops(stopID INTEGER, stopName TEXT);");
 
@@ -24,7 +23,7 @@ public class RecentStops {
         menuItems[4] = menu.findItem(R.id.bus5);
     }
 
-    public void readStops() {
+    void readStops() {
         Cursor resultSet = myDB.rawQuery("SELECT * FROM RecentStops", null);
         resultSet.moveToFirst();
         int i;
@@ -36,11 +35,10 @@ public class RecentStops {
             menuItems[i].setTitle(stopNames[i]);
             menuItems[i].setVisible(true);
         }
-        count = i;
         resultSet.close();
     }
 
-    public void addStop(String stopID, String stopName) {
+    void addStop(String stopID, String stopName) {
         readStops();
 
         for (int i=0; i<5; i++) {
@@ -49,7 +47,6 @@ public class RecentStops {
                     stopIDs[j] = stopIDs[j+1];
                     stopNames[j] = stopNames[j+1];
                 }
-                count--;
             }
         }
 
