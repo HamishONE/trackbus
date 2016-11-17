@@ -59,6 +59,8 @@ class ATApi {
     // Gets drift global var
     static void getDrift() {
 
+        if (currentApiVersion == API_VERSION.APIv2) return;
+
         final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
         getData(ATApi.data.apiRoot() + "time/epoch?api_key=" + epochKey);
     }
