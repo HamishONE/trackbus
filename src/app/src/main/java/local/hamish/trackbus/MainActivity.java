@@ -326,7 +326,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             dialog = ProgressDialog.show(this, "Downloading stops list", arg2, true);
 
             myDB.execSQL("DELETE FROM Stops;");
-            getStops(ATApi.data.apiRoot + ATApi.data.stops + ATApi.getAuthorization());
+            getStops(ATApi.data.apiRoot() + ATApi.data.stops + ATApi.getAuthorization());
         }
     }
 

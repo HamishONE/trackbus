@@ -29,7 +29,7 @@ public class AllBusesHelper {
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
     private FavouritesHelper favouritesHelper;
-    private AdvancedApiBoard_private_api.Output out;
+    private AdvancedApiBoard.Output out;
 
     private HashMap<Marker, Integer> mHashMap = new HashMap<Marker, Integer>();
 
@@ -42,7 +42,7 @@ public class AllBusesHelper {
     }
 
     // Calls the API
-    public void callAPI(AdvancedApiBoard_private_api.Output out) {
+    public void callAPI(AdvancedApiBoard.Output out) {
         this.tripsArray = out.tripArray;
         this.routesArray = out.routeArray;
         this.stopSeqArray = out.stopSeqArray;
@@ -53,7 +53,7 @@ public class AllBusesHelper {
             allTrips += out.tripArray[i] + ",";
         }
         Log.e("Num requested: ", String.valueOf(out.count));
-        getData(ATApi.data.apiRoot + ATApi.data.vehicleLocations + ATApi.getAuthorization() + allTrips);
+        getData(ATApi.data.apiRoot() + ATApi.data.vehicleLocations + ATApi.getAuthorization() + allTrips);
     }
 
     // Calls the API

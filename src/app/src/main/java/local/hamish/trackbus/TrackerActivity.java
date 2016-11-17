@@ -262,8 +262,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.data.apiRoot + ATApi.data.shapeByTripId + tripID + ATApi.getAuthorization());
-        getRealtimeData(ATApi.data.apiRoot + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+        getPointData(ATApi.data.apiRoot() + ATApi.data.shapeByTripId + tripID + ATApi.getAuthorization());
+        getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
     }
 
     // Calls the API regularly and redraws map
@@ -353,7 +353,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                getRealtimeData(ATApi.data.apiRoot + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
             }
         }, timeDelay);
     }
@@ -469,7 +469,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.data.apiRoot + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
             }
         });
        snackbar.show();
