@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 class AdvancedApiBoard {
 
@@ -48,7 +49,7 @@ class AdvancedApiBoard {
 
                     tripData = jsonObject.getJSONArray("response");
                     getStopDataWithTripIDs();
-                    produceBoard(false, isNew);
+                    produceBoard(isNew);
                 } catch (JSONException e) {e.printStackTrace();}
             }
 
@@ -77,7 +78,7 @@ class AdvancedApiBoard {
                 } catch (JSONException e) {e.printStackTrace();}
                 // Refresh board with new data
                 out.count = 0;
-                produceBoard(true, true);
+                produceBoard(true);
             }
 
             @Override
@@ -89,19 +90,21 @@ class AdvancedApiBoard {
     }
 
     // Continues with code after network responds
-    private void produceBoard(boolean incStops, boolean isNew) {
+    private void produceBoard(boolean isNew) {
 
-        int stopsAway = 0;
+        if (tripData == null) return;
+        boolean incStops = !(stopData == null);
+
+        int stopsAway;
         String stopsAwayStr = "";
         String dueStr = "";
-        String delayStr = "";
-        String route = "";
-        String tripDataTrip = "";
-        String destination = "";
-        int stopSeq = 0;
-        String schTimeStr = "";
-        Date schTime = null;
-        int delay = 0;
+        String route;
+        String tripDataTrip;
+        String destination ;
+        int stopSeq;
+        String schTimeStr;
+        Date schTime;
+        int delay;
 
         for (int i = 0; i < out.terminatingArray.length; i++) {
             out.terminatingArray[i] = false;
@@ -179,7 +182,7 @@ class AdvancedApiBoard {
                             out.stopSeqArray[out.count] = stopSeq;
 
                             // Format numbers
-                            dueStr = String.format("%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
+                            dueStr = String.format(Locale.US, "%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
                             stopsAwayStr = stopsAway + "";
                         }
                     } catch (JSONException e) {
@@ -202,13 +205,15 @@ class AdvancedApiBoard {
                 }
 
                 // Check for terminating or scheduled service
+                out.scheduledArray[out.count] = false;
+                out.terminatingArray[out.count] = false;
                 if (stopSeq == 1) {
                     out.scheduledArray[out.count] = true;
                 } else if (destination.contains(stopName)) {
-                    out.terminatingArray[out.count] = true;
+                    out.terminatingArray[out.count] = true; //no longer works, consider removing
                 }
 
-                DateFormat df = new SimpleDateFormat("hh:mm a");
+                DateFormat df = new SimpleDateFormat("hh:mm a", Locale.US);
                 String schTimeStrNew = df.format(schTime);
 
                 out.routeArray[out.count] = route;
@@ -237,11 +242,12 @@ class AdvancedApiBoard {
         }
         out.count = i;
         if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
-        getStopData(tripsForApi);
+        //getStopData(tripsForApi);
     }
 
     void callAPIs() {
         getTripData(true);
+        getStopData(""); //new
     }
 
     // Refreshes all data
@@ -250,12 +256,13 @@ class AdvancedApiBoard {
         stopData = null;
         out.count = 0;
         getTripData(false);
+        getStopData(""); //new
     }
 
     // Refreshes board to show/hide terminating services
     void changeTerminating(boolean showTerminating) {
         this.showTerminating = showTerminating;
-        produceBoard(true, false);
+        produceBoard(false);
     }
 
     // Object for outputs
@@ -291,8 +298,8 @@ class AdvancedApiBoard {
         if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
+        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
+        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         // Show snackbar
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);

@@ -67,8 +67,6 @@ class TraditionalApiBoard {
                 //Check if actual due time
                 if (isReal && !actual.equals("null")) {
                     // Calculate due time and add to array
-                    Date hi1 = cleanTime(actual);
-                    Date hi2 = new Date();
                     double dblActual = cleanTime(actual).getTime() - (new Date().getTime());
                     dblActual /= 1000*60;
                     items[count].dueTime = String.valueOf(Math.round(dblActual));

@@ -15,14 +15,12 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -51,6 +49,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Locale;
 
 public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
 
@@ -280,7 +279,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         int secsAgo = 0;
         int delay = 0;
         JSONObject stopDict = null;
-        JSONObject locDict = null;
+        JSONObject locDict;
         Double bearingNew = null;
 
         try {
@@ -314,7 +313,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         String notiText = "";
 
         // Set timestamp header
-        String timestamp = String.format("%2ds ago", secsAgo);
+        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
         tvTimestamp.setText(timestamp);
         notiText += timestamp + "\n";
 
@@ -459,8 +458,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
+        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
+        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         // Show snackbar
         if (snackbar != null && snackbar.isShown()) return;
         View view = findViewById(R.id.cordLayoutTracker);
@@ -534,7 +533,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
             mNotifyMgr.notify(47, mBuilder.build());
 
-            return new Long(0);
+            return 0L;
         }
     }
 
@@ -581,10 +580,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Intent intent = new Intent(context, NotificationDismissedReceiver.class);
         intent.putExtra("local.hamish.trackbus.notificationId", notificationId);
 
-        PendingIntent pendingIntent =
-                PendingIntent.getBroadcast(context.getApplicationContext(),
-                        notificationId, intent, 0);
-        return pendingIntent;
+        return PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent, 0);
     }
 
 }

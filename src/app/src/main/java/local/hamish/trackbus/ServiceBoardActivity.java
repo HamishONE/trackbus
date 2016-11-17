@@ -24,7 +24,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -535,7 +534,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         private final Context context;
         private final String[] values;
 
-        public CustomArrayAdapter(Context context, String[] values) {
+        CustomArrayAdapter(Context context, String[] values) {
             super(context, -1, values);
             this.context = context;
             this.values = values;
@@ -586,7 +585,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         String[] titles = {"Older Source", "Newer Source", "Map View"};
 
-        public DemoCollectionPagerAdapter(FragmentManager fm) {super(fm);}
+        DemoCollectionPagerAdapter(FragmentManager fm) {super(fm);}
 
         @Override // Links tab with class
         public Fragment getItem(int i) {

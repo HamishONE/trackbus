@@ -15,16 +15,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.HashMap;
+import java.util.Locale;
 
-public class AllBusesHelper {
+class AllBusesHelper {
 
     private String[] tripsArray = new String[1000];
     private String[] routesArray = new String[1000];
     private int[] stopSeqArray = new int[1000];
     private GoogleMap map;
     private JSONArray locData;
-    public Marker[] markers = new Marker[1000];
-    public int markLen = 0;
+    Marker[] markers = new Marker[1000];
+    int markLen = 0;
     private boolean firstCall = true;
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
@@ -34,7 +35,7 @@ public class AllBusesHelper {
     private HashMap<Marker, Integer> mHashMap = new HashMap<Marker, Integer>();
 
     // Constructor
-    public AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map, FavouritesHelper favouritesHelper) {
+    AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map, FavouritesHelper favouritesHelper) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.map = map;
         this.circle = circle;
@@ -42,7 +43,7 @@ public class AllBusesHelper {
     }
 
     // Calls the API
-    public void callAPI(AdvancedApiBoard.Output out) {
+    void callAPI(AdvancedApiBoard.Output out) {
         this.tripsArray = out.tripArray;
         this.routesArray = out.routeArray;
         this.stopSeqArray = out.stopSeqArray;
@@ -57,7 +58,7 @@ public class AllBusesHelper {
     }
 
     // Calls the API
-    public void simplify(String[] tripsArray, String[] routesArray, int[] stopSeqArray) {
+    void simplify(String[] tripsArray, String[] routesArray, int[] stopSeqArray) {
         this.tripsArray = tripsArray;
         this.routesArray = routesArray;
         this.stopSeqArray = stopSeqArray;
@@ -150,7 +151,7 @@ public class AllBusesHelper {
     }
 
     // Show snackbar and allow refreshing on HTTP failure
-    public void handleError(int statusCode) {
+    void handleError(int statusCode) {
         View circle = serviceBoardActivity.findViewById(R.id.loadingPanelMap);
         if (circle == null) {
             Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
@@ -162,8 +163,8 @@ public class AllBusesHelper {
         if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format("AT server error (HTTP response %d)", statusCode);
-        else message = String.format("Network error (HTTP response %d)", statusCode);
+        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
+        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         // Show snackbar
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);

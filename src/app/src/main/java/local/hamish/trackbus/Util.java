@@ -8,15 +8,16 @@ import android.util.DisplayMetrics;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
-public final class Util {
+final class Util {
 
     private Util() {}
 
     // Converts time string to Date object using format, assumes NZST/NZDT
-    public static Date deformatTime(String s, String format) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+    static Date deformatTime(String s, String format) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Pacific/Auckland"));
         try {
             return simpleDateFormat.parse(s);
@@ -28,8 +29,8 @@ public final class Util {
     }
 
     // Converts time string to Date object using format, assumes GMT/UTC
-    public static Date gmtDeformatTime(String s, String format) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+    static Date gmtDeformatTime(String s, String format) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         try {
             return simpleDateFormat.parse(s);
@@ -41,7 +42,7 @@ public final class Util {
     }
 
     // Emulator for CryptoJS Hmac.SHA1
-    public static String hmacSHA1(String value, String key) {
+    static String hmacSHA1(String value, String key) {
         String type = "HmacSHA1";
         try {
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance(type);
@@ -63,7 +64,7 @@ public final class Util {
     }
 
     // Returns 1 or 2 if train or ferry
-    public static int findStopType(String stopName) {
+    static int findStopType(String stopName) {
         if (stopName.contains("Train")) {
             return 1;
         } else if (stopName.contains("Ferry")) {
@@ -73,14 +74,14 @@ public final class Util {
     }
 
     // Converts dp to px for a given application context
-    public static float convertDpToPixel(float dp, Context context){
+    static float convertDpToPixel(float dp, Context context){
         Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         return dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     //Call like this: out = Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE))
-    public static boolean isNetworkAvailable(Object systemService) {
+    static boolean isNetworkAvailable(Object systemService) {
         ConnectivityManager connectivityManager = (ConnectivityManager) systemService;
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();

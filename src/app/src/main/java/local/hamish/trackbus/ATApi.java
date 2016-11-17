@@ -6,17 +6,14 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 class ATApi {
 
-    private enum API_VERSION {APIv1, APIv2};
+    private enum API_VERSION {APIv1, APIv2}
     private static API_VERSION currentApiVersion = API_VERSION.APIv2; //todo:replace with setting;
     private static int drift = 0;
     static int errorCount = 0;
 
-    // Important strings from AT Track My Bus App
     public static class data {
 
         static String apiRoot() {

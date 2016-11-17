@@ -9,7 +9,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -221,7 +220,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         private final Context context;
         private final String[] values;
 
-        public FavouritesArrayAdapter(Context context, String[] values) {
+        FavouritesArrayAdapter(Context context, String[] values) {
             super(context, -1, values);
             this.context = context;
             this.values = values;
