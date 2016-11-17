@@ -107,6 +107,7 @@ class TraditionalApiBoard {
             boardData = jsonObject.getJSONObject("response").getJSONArray("movements");
             produceBoard();
         } catch (JSONException e) {
+            if (active) serviceBoardActivity.produceViewOld();
             e.printStackTrace();
         }
     }
