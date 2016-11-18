@@ -339,29 +339,49 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void run() {
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
 
+                String values = "";
                 for (int i = 0; i < stopListData.length(); i++) {
                     try {
+                        int location_type = stopListData.getJSONObject(i).getInt("location_type");
+                        if (location_type != 0) continue;
+
                         String stopID = stopListData.getJSONObject(i).getString("stop_id");
                         String lat = stopListData.getJSONObject(i).getString("stop_lat");
                         String lon = stopListData.getJSONObject(i).getString("stop_lon");
                         String stopName = stopListData.getJSONObject(i).getString("stop_name");
-                        int location_type = stopListData.getJSONObject(i).getInt("location_type");
-
-                        if (location_type != 0) continue;
 
                         if (stopID.contains("_")) {
                             int end = stopID.indexOf("_");
                             stopID = stopID.substring(0, end);
                         }
-                        myDB.execSQL("INSERT INTO Stops VALUES(" + stopID + "," + lat + "," + lon + ",'" + stopName.replace("'", "''") + "');");
+                        values += "(" + stopID + "," + lat + "," + lon + ",'" + stopName.replace("'", "''") + "')";
+                        if (i != stopListData.length()-1) values += ",";
+
+                        final int num = i;
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            public void run() {
+                                dialog.setMessage("Please Wait (" + num + "/" + stopListData.length() + ")");
+                            }
+                        });
+
                     } catch (JSONException e) {e.printStackTrace();}
                 }
+                myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
+
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        dialog.dismiss();
+                        findBounds();
+                    }
+                });
             }
         };
+
+        dialog.setTitle("Processing data");
         thread.start();
 
-        findBounds();
-        dialog.dismiss();
+        //findBounds();
+        //dialog.dismiss();
     }
 
     // Get trip data for one stop

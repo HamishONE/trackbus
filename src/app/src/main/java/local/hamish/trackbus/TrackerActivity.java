@@ -14,6 +14,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -79,6 +80,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     private NotificationManager mNotifyMgr;
     private boolean active = true;
     static boolean notificationDismissed = false;
+    private int lastTimestamp;
+    private CountDownTimer timer = null;
 
     @Override // On activity creation
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,6 +268,15 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
     }
 
+    private void updateTimestamp() {
+
+        int secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
+        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
+        tvTimestamp.setText(timestamp);
+
+        timer.start();
+    }
+
     // Calls the API regularly and redraws map
     private void main() {
 
@@ -292,8 +304,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             long2 = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
             stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
                     .getInt("stop_sequence");
-            int timestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
-            secsAgo = (int) (new Date().getTime() / 1000) - timestamp;
+            lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
+            secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
 
             //** MUST BE LAST **//
             bearingNew = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("bearing");
@@ -316,6 +328,23 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
         tvTimestamp.setText(timestamp);
         notiText += timestamp + "\n";
+
+        if (timer == null) {
+            timer = new CountDownTimer(1000, 20) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                }
+
+                @Override
+                public void onFinish() {
+                    try{
+                        updateTimestamp();
+                    }catch(Exception e){
+                        Log.e("Error", "Error: " + e.toString());
+                    }
+                }
+            }.start();
+        }
 
         // Set due time header
         long dueSec = schTime + delay - new Date().getTime()/1000;
