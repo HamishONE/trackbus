@@ -40,12 +40,13 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import java.util.Arrays;
 
-public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback  {
 
     // Miscellaneous vars
     public String stopID = null;
@@ -359,23 +360,23 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     public void prepareMap() {
 
         if (firstTime) {
+
             firstTime = false;
-            // Link to map fragment and show location if allowed
-            map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            map.setMyLocationEnabled(true);
-            map.getUiSettings().setRotateGesturesEnabled(false);
-            map.getUiSettings().setMapToolbarEnabled(false);
-            map.getUiSettings().setTiltGesturesEnabled(false);
-            View circle = findViewById(R.id.loadingPanelMap);
+            ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
 
-            allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
+        } else {
+            allBusesHelper.callAPI(out);
         }
+    }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
+        map = googleMap;
+        Util.setupMap(this, map);
+
+        View circle = findViewById(R.id.loadingPanelMap);
+        allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
         allBusesHelper.callAPI(out);
     }
 

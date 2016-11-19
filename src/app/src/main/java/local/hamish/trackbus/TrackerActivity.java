@@ -33,6 +33,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -52,7 +53,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
-public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
+public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private static final int timeDelay = 2000; //ms
 
@@ -82,6 +83,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     static boolean notificationDismissed = false;
     private int lastTimestamp;
     private CountDownTimer timer = null;
+    private String stopID;
 
     @Override // On activity creation
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,7 +121,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         stopSeq = intent.getIntExtra(ServiceBoardActivity.EXTRA_STOP_SEQ, -1);
         schTime = intent.getLongExtra(ServiceBoardActivity.EXTRA_SCH_DATE, -1);
         String route = intent.getStringExtra(ServiceBoardActivity.EXTRA_ROUTE);
-        String stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
+        stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
 
         // Set activity title using special names if possible
         if (route.equals("SKY")) {
@@ -138,18 +140,16 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         setTitle(title);
 
         // Link to map fragment and show location if allowed
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        map.setMyLocationEnabled(true);
-        map.getUiSettings().setRotateGesturesEnabled(false);
-        map.getUiSettings().setMapToolbarEnabled(false);
-        map.getUiSettings().setTiltGesturesEnabled(false);
+        ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+        Util.setupMap(this, map);
 
         // Add stop location to map
+        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
         resultSet.moveToFirst();
         double lat = resultSet.getDouble(0);

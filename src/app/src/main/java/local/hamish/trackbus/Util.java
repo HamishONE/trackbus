@@ -1,10 +1,17 @@
 package local.hamish.trackbus;
 
+import android.*;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
+import android.view.View;
+
+import com.google.android.gms.maps.GoogleMap;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -85,6 +92,17 @@ final class Util {
         ConnectivityManager connectivityManager = (ConnectivityManager) systemService;
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    // Sets up the map the way we like it
+    static void setupMap (Context context ,GoogleMap map) {
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            map.setMyLocationEnabled(true);
+        }
+        map.getUiSettings().setRotateGesturesEnabled(false);
+        map.getUiSettings().setMapToolbarEnabled(false);
+        map.getUiSettings().setTiltGesturesEnabled(false);
     }
 
 }

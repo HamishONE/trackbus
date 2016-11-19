@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -64,7 +65,6 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         readFavourites();
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         Intent intent = null;
@@ -227,7 +227,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public @NonNull View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.favourites_row_layout, parent, false);
 
@@ -241,7 +241,6 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
 
             return rowView;
         }
-
 
         @Override
         public void remove(String stopID) {

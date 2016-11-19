@@ -12,6 +12,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -30,6 +31,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -44,7 +46,9 @@ import org.json.JSONObject;
 
 import java.util.Locale;
 
-public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+
+    static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
 
     private String[][] stops = new String[10000][4];
     private GoogleMap map = null;
@@ -92,25 +96,50 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             return;
         }
 
-        // Link to map fragment and show location if allowed
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+        // Link to map fragment and setup as desired
+        ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+
+        // Check if location permission has not yet been granted
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Check if permission has been requested before
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // Request the permission.
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
         }
-        map.setMyLocationEnabled(true);
-        map.getUiSettings().setRotateGesturesEnabled(false);
-        map.getUiSettings().setMapToolbarEnabled(false);
-        map.getUiSettings().setTiltGesturesEnabled(false);
+
+        ATApi.getDrift();
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+        Util.setupMap(this, map);
         map.setOnCameraChangeListener(getCameraChangeListener());
 
-        // Get time drift
-        ATApi.getDrift();
-
-        // Zoom to location and show stops
-        zoomToLoc();
         loadStops(false);
+        zoomToLoc();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    try {
+                        map.setMyLocationEnabled(true);
+                    } catch (SecurityException e) {
+                        e.printStackTrace();
+                    }
+                }
+                zoomToLoc();
+                break;
+            }
+        }
     }
 
     @Override // Prevents state resetting
@@ -262,20 +291,23 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         len += i;
     }
 
-    // Zooms map to current location
+    // Zooms map to current location or CBD if not available
     private void zoomToLoc() {
+
+        Location location;
+
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED) {
-            return;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            location = null;
+        } else {
+            location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, true)); //todo: confirm true
         }
-        Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
+
         if (location != null) {
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17));
         } else {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.87, 174.79), 15)); // todo: use lib
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 15));
         }
     }
 
@@ -324,8 +356,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         resultSet.close();
 
         if (count == 0 || override) {
-            String arg2 = !override ? "This is only required on first run" : "Please wait";
-            dialog = ProgressDialog.show(this, "Downloading stops list", arg2, true);
+            String arg1 = !override ? "Loading stops (first run only)" : "Loading stops";
+            dialog = ProgressDialog.show(this, arg1, "Please wait", true);
 
             myDB.execSQL("DELETE FROM Stops;");
             getStops(ATApi.data.apiRoot() + ATApi.data.stops + ATApi.getAuthorization());
@@ -360,7 +392,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         final int num = i;
                         MainActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                dialog.setMessage("Please Wait (" + num + "/" + stopListData.length() + ")");
+                                dialog.setMessage("Processing data (" + num*100/stopListData.length() + "%)");
                             }
                         });
 
@@ -377,7 +409,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             }
         };
 
-        dialog.setTitle("Processing data");
+        //dialog.setTitle("Processing data");
         thread.start();
 
         //findBounds();
@@ -397,6 +429,12 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                     stopListData = jsonObject.getJSONArray("response");
                     fillDatabase();
                 } catch (JSONException e) {e.printStackTrace();}
+            }
+
+            @Override
+            public void onProgress(long bytesWritten, long totalSize) {
+                long progressPercentage = (long)100*bytesWritten/totalSize;
+                dialog.setMessage("Downloading from server (" + progressPercentage + "%)");
             }
 
             @Override

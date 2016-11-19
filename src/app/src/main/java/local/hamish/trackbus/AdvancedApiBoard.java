@@ -248,6 +248,8 @@ class AdvancedApiBoard {
     void callAPIs() {
         getTripData(true);
         getStopData(""); //new
+
+        //new CombinedApiBoard(serviceBoardActivity).updateData();
     }
 
     // Refreshes all data
@@ -257,6 +259,8 @@ class AdvancedApiBoard {
         out.count = 0;
         getTripData(false);
         getStopData(""); //new
+
+
     }
 
     // Refreshes board to show/hide terminating services

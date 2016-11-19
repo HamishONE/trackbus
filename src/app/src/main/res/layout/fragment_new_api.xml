@@ -5,14 +5,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     tools:context="local.hamish.trackbus.ServiceBoardActivity"
     android:id="@+id/newApiFragment" >
 
     <RelativeLayout
         android:layout_height="match_parent"
-        android:layout_width="match_parent"
-        xmlns:android="http://schemas.android.com/apk/res/android" >
+        android:layout_width="match_parent">
 
         <RelativeLayout
             android:id="@+id/loadingPanelNew"
