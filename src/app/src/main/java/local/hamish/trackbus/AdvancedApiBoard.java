@@ -11,8 +11,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
+
+import static java.util.Calendar.YEAR;
 
 class AdvancedApiBoard {
 
@@ -103,7 +107,7 @@ class AdvancedApiBoard {
         String destination ;
         int stopSeq;
         String schTimeStr;
-        Date schTime;
+        GregorianCalendar schTime;
         int delay;
 
         for (int i = 0; i < out.terminatingArray.length; i++) {
@@ -127,19 +131,22 @@ class AdvancedApiBoard {
                 }
 
                 // Parse scheduled time
-                Date cTime = new Date();
-                // todo: clean up below
-                //schTime = Util.deformatTime(schTimeStr, "kk:mm:ss");
-                //schTime = new Date(cTime.getYear(), cTime.getMonth(), cTime.getDate(), schTime.getHours(), schTime.getMinutes(), schTime.getSeconds());
+                GregorianCalendar cTime = new GregorianCalendar();
 
                 if (schTimeStr.substring(0, 2).equals("24")) {
                     // Adjust time as falls in next day
                     schTimeStr = schTimeStr.replace("24", "00");
-                    schTime = Util.deformatTime(schTimeStr, "HH:mm:ss");
-                    schTime = new Date(cTime.getYear(), cTime.getMonth(), cTime.getDate() + 1, schTime.getHours(), schTime.getMinutes(), schTime.getSeconds());
+
+                    (schTime = new GregorianCalendar()).setTime(Util.deformatTime(schTimeStr, "HH:mm:ss"));
+                    schTime = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
+                            cTime.get(Calendar.DAY_OF_MONTH)+1, schTime.get(Calendar.HOUR_OF_DAY),
+                            schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND) );
                 } else {
-                    schTime = Util.deformatTime(schTimeStr, "HH:mm:ss");
-                    schTime = new Date(cTime.getYear(), cTime.getMonth(), cTime.getDate(), schTime.getHours(), schTime.getMinutes(), schTime.getSeconds());
+
+                    (schTime = new GregorianCalendar()).setTime(Util.deformatTime(schTimeStr, "HH:mm:ss"));
+                    schTime = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
+                            cTime.get(Calendar.DAY_OF_MONTH), schTime.get(Calendar.HOUR_OF_DAY),
+                            schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND) );
                 }
 
                 if (incStops && stopData!=null) {
@@ -174,7 +181,7 @@ class AdvancedApiBoard {
                             }
 
                             // Calculate due time
-                            double dueTime = schTime.getTime() / 1000 + delay;
+                            double dueTime = schTime.getTimeInMillis() / 1000 + delay;
                             double dueSecs = dueTime - (new Date().getTime() / 1000);
 
                             // Add to arrays
@@ -214,14 +221,14 @@ class AdvancedApiBoard {
                 }
 
                 DateFormat df = new SimpleDateFormat("hh:mm a", Locale.US);
-                String schTimeStrNew = df.format(schTime);
+                String schTimeStrNew = df.format(schTime.getTime());
 
                 out.routeArray[out.count] = route;
                 out.schTimeArray[out.count] = schTimeStrNew;
                 out.stopsAwayArray[out.count] = stopsAwayStr;
                 out.headsignArray[out.count] = destination;
                 out.dueTimeArray[out.count] = dueStr;
-                out.dateSchArray[out.count] = schTime.getTime() / 1000;
+                out.dateSchArray[out.count] = schTime.getTimeInMillis() / 1000;
                 out.count++;
             } catch (JSONException e) {e.printStackTrace();}
         }
@@ -248,6 +255,8 @@ class AdvancedApiBoard {
     void callAPIs() {
         getTripData(true);
         getStopData(""); //new
+
+        //new CombinedApiBoard(serviceBoardActivity).updateData();
     }
 
     // Refreshes all data
@@ -257,6 +266,8 @@ class AdvancedApiBoard {
         out.count = 0;
         getTripData(false);
         getStopData(""); //new
+
+
     }
 
     // Refreshes board to show/hide terminating services

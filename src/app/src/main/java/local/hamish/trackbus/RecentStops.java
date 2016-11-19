@@ -32,8 +32,10 @@ class RecentStops {
             stopNames[i] = resultSet.getString(1);
             resultSet.moveToNext();
 
-            menuItems[i].setTitle(stopNames[i]);
-            menuItems[i].setVisible(true);
+            if (!stopNames[i].equals("null")) {
+                menuItems[i].setTitle(stopNames[i]);
+                menuItems[i].setVisible(true);
+            }
         }
         resultSet.close();
     }

@@ -1,12 +1,10 @@
 package local.hamish.trackbus;
 
-import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -16,9 +14,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -33,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -52,7 +51,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
-public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
+public class TrackerActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private static final int timeDelay = 2000; //ms
 
@@ -82,6 +81,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     static boolean notificationDismissed = false;
     private int lastTimestamp;
     private CountDownTimer timer = null;
+    private String stopID;
 
     @Override // On activity creation
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +98,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -107,6 +107,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
+        myDB.close();
 
         // Link to header TextViews
         tvStops = (TextView) findViewById(R.id.stop_info);
@@ -119,42 +120,47 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         stopSeq = intent.getIntExtra(ServiceBoardActivity.EXTRA_STOP_SEQ, -1);
         schTime = intent.getLongExtra(ServiceBoardActivity.EXTRA_SCH_DATE, -1);
         String route = intent.getStringExtra(ServiceBoardActivity.EXTRA_ROUTE);
-        String stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
+        stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
 
         // Set activity title using special names if possible
-        if (route.equals("SKY")) {
-            title = "SkyBus";
-        } else if (route.equals("INN")) {
-            title = "Inner Link";
-        } else if (route.equals("CTY")) {
-            title = "City Link";
-        } else if (route.equals("OUT")) {
-            title = "Outer Link";
-        } else if (route.equals("NEX")) {
-            title = "Northern Express";
-        } else {
-            title = "Route " + route;
+        switch(route) {
+            case "SKY":
+                title = "SkyBus";
+                break;
+            case "INN":
+                title = "Inner Link";
+                break;
+            case "CTY":
+                title = "City Link";
+                break;
+            case "OUT":
+                title = "Outer Link";
+                break;
+            case "NEX":
+                title = "Northern Express";
+                break;
+            default:
+                title = "Route " + route;
         }
         setTitle(title);
 
         // Link to map fragment and show location if allowed
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        map.setMyLocationEnabled(true);
-        map.getUiSettings().setRotateGesturesEnabled(false);
-        map.getUiSettings().setMapToolbarEnabled(false);
-        map.getUiSettings().setTiltGesturesEnabled(false);
+        ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+        Util.setupMap(this, map);
 
         // Add stop location to map
+        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
         resultSet.moveToFirst();
         double lat = resultSet.getDouble(0);
         double lon = resultSet.getDouble(1);
         resultSet.close();
+        myDB.close();
         map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
 
         // Call API
@@ -192,7 +198,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:

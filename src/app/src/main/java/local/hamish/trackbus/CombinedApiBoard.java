@@ -1,15 +1,113 @@
 package local.hamish.trackbus;
 
-public class CombinedApiBoard {
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-    void createBoard() {
+class CombinedApiBoard {
 
-        //request old data
-        //request new data
+    static private JSONArray apiResponse;
+    private SQLiteDatabase myDB = null;
 
-        //parse and add to db, one row per group
+    CombinedApiBoard(Context context) {
+        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+    }
 
-        //
+    void updateData() {
+        getData();
+    }
+
+    private void processStopData (JSONObject object) {
+        try {
+            String trip_id = object.getJSONObject("trip_update").getJSONObject("trip").getString("trip_id");
+            String route_id = object.getJSONObject("trip_update").getJSONObject("trip").getString("route_id");
+            String vehicle_id = object.getJSONObject("trip_update").getJSONObject("vehicle").getString("id");
+            int stop_sequence = object.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_sequence");
+            int stop_id = object.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_id");
+            //int timestamp = object.getJSONObject("trip_update").getInt("timestamp");
+
+            int delay;
+            JSONObject stop_time_update = object.getJSONObject("trip_update").getJSONObject("stop_time_update");
+            if (stop_time_update.has("arrival")) delay = stop_time_update.getJSONObject("arrival").getInt("delay");
+            else delay = stop_time_update.getJSONObject("departure").getInt("delay");
+
+            String values = "'" + trip_id + "','" + route_id + "','" + vehicle_id + "'," + stop_sequence + "," + stop_id + "," + delay;
+            String sql = "INSERT INTO CombinedApi (trip_id,route_id,vehicle_id,stop_sequence,stop_id,delay) VALUES ("+values+");";
+            myDB.execSQL(sql);
+
+        } catch (JSONException e) { e.printStackTrace(); }
+    }
+
+    private void processLocData (JSONObject object) {
+        try {
+            String trip_id = object.getJSONObject("vehicle").getJSONObject("trip").getString("trip_id");
+            //String route_id = object.getJSONObject("vehicle").getJSONObject("trip").getString("route_id");
+            String start_time = object.getJSONObject("vehicle").getJSONObject("trip").getString("start_time");
+            String vehicle_id = object.getJSONObject("vehicle").getJSONObject("vehicle").getString("id");
+            String latitude = object.getJSONObject("vehicle").getJSONObject("position").getString("latitude");
+            String longitude = object.getJSONObject("vehicle").getJSONObject("position").getString("longitude");
+            int bearing = object.getJSONObject("vehicle").getJSONObject("position").optInt("bearing", 0); //todo: use last bearing
+            int timestamp = object.getJSONObject("vehicle").getInt("timestamp");
+            int occupancy_status = object.getJSONObject("vehicle").optInt("occupancy_status", -1);
+
+            String values = "start_time='"+start_time+"',vehicle_id='"+vehicle_id+"',latitude="+latitude+",longitude="+longitude
+                    +",bearing="+bearing+",timestamp="+timestamp+",occupancy_status="+occupancy_status;
+            String sql = "UPDATE CombinedApi SET " + values + " WHERE trip_id='" + trip_id + "';";
+            myDB.execSQL(sql);
+
+        } catch (JSONException e) { e.printStackTrace(); }
+    }
+
+    private void processMessage (JSONObject object) {
+        //do nothing for now
+    }
+
+    private void processData() {
+
+        String cols = "trip_id TEXT, route_id TEXT, vehicle_id TEXT, stop_sequence INTEGER, " +
+                "stop_id INTEGER, delay INTEGER, start_time TEXT, latitude REAl, longitude REAL, " +
+                "bearing INTEGER, occupancy_status INTEGER, timestamp INTEGER";
+        myDB.execSQL("DROP TABLE IF EXISTS CombinedApi");
+        myDB.execSQL("CREATE TABLE CombinedApi (" + cols + ");");
+
+        for (int i=0; i<apiResponse.length(); i++) {
+            try {
+                JSONObject object = apiResponse.getJSONObject(i);
+
+                if (object.has("trip_update")) processStopData(object);
+                else if (object.has("vehicle")) processLocData(object);
+                else processMessage(object);
+
+            } catch (JSONException e) { e.printStackTrace(); }
+        }
+    }
+
+    private void getData() {
+        final String urlString = ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization();
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(urlString, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
+                try {
+                    String str = new String(responseBody);
+                    JSONObject jsonObject = new JSONObject(str);
+
+                    apiResponse = jsonObject.getJSONObject("response").getJSONArray("entity");
+                    processData();
+                } catch (JSONException e) {e.printStackTrace();}
+            }
+
+            @Override
+            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e("HTTP Error", statusCode + " " + error.getMessage());
+                //handleError(statusCode); //todo: do something
+            }
+        });
     }
 
 }

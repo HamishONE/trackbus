@@ -12,6 +12,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -40,19 +42,20 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import java.util.Arrays;
 
-public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener  {
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     // Miscellaneous vars
     public String stopID = null;
     public static String stopName = null; // static to support changing fragment header
     private Menu myMenu = null;
     private boolean showTerminating = false;
-    private GoogleMap map;
+    static private GoogleMap map;
     private boolean firstTime = true;
     RecentStops recentStops;
     private boolean active = true;
@@ -90,7 +93,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -104,7 +107,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.addStop(stopID, stopName);
-
+        myDB.close();
 
         // Setup update button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -114,7 +117,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 updateData(false);
             }
         });
-
 
         if (Util.findStopType(stopName) == 0) {
             mViewPager.setCurrentItem(1, false); // Show new data first for buses
@@ -144,6 +146,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         //if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         oldApiBoard = new TraditionalApiBoard(this, stopID);
         oldApiBoard.callAPI();
+
     }
 
     @Override
@@ -176,7 +179,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:
@@ -227,7 +230,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         myMenu.getItem(1).setChecked(showTerminating);
         mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setOnPageChangeListener(
+        mViewPager.addOnPageChangeListener(
                 new ViewPager.SimpleOnPageChangeListener() {
                     @Override
                     public void onPageSelected(int position) {
@@ -312,8 +315,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     // Add current stop to favourites table in database
     private void changeFavourite() {
-        final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), myDB, this, stopID, stopName, null);
+        FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), this, stopID, stopName, null);
         favStopsHelper.changeFavourite();
     }
 
@@ -359,20 +361,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     public void prepareMap() {
 
         if (firstTime) {
-            firstTime = false;
-            // Link to map fragment and show location if allowed
-            map = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            map.setMyLocationEnabled(true);
-            map.getUiSettings().setRotateGesturesEnabled(false);
-            map.getUiSettings().setMapToolbarEnabled(false);
-            map.getUiSettings().setTiltGesturesEnabled(false);
-            View circle = findViewById(R.id.loadingPanelMap);
 
+            firstTime = false;
+            View circle = findViewById(R.id.loadingPanelMap);
             allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
         }
 
@@ -453,13 +444,14 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         // Check if stop exists
         if (resultSet.getCount() != 0) {
             // If so use filled icon
-            myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_filled));
+            myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_filled));
         } else {
             // If not use hollow icon
-            myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_hollow));
+            myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_hollow));
         }
         // Close cursor
         resultSet.close();
+        myDB.close();
     }
 
     // Changes visibility of terminating services
@@ -480,14 +472,15 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         private final Context context;
         private final String[] values;
 
-        public OldArrayAdapter(Context context, String[] values) {
+        OldArrayAdapter(Context context, String[] values) {
             super(context, -1, values);
             this.context = context;
             this.values = values;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
 
@@ -524,6 +517,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
             if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
             resultSet.close();
+            myDB.close();
 
             return rowView;
         }
@@ -541,7 +535,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
 
@@ -575,6 +570,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
             if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
             resultSet.close();
+            myDB.close();
 
             return rowView;
         }
@@ -601,7 +597,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 fragment = new MapFragment();
                 args.putInt(MapFragment.ARG_OBJECT, i + 1);
             }
-            fragment.setArguments(args);
+            //fragment.setArguments(args);
             return fragment;
         }
 
@@ -619,7 +615,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_new_api, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
             return rootView;
         }
@@ -632,7 +628,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_old_api, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
 
             // Change column header to pier/platform as appropriate
             switch (Util.findStopType(ServiceBoardActivity.stopName)) {
@@ -666,8 +662,20 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_all_buses, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
+
+            // Setup map
+            ((com.google.android.gms.maps.MapFragment) getActivity().getFragmentManager().findFragmentById(R.id.map))
+                    .getMapAsync(new OnMapReadyCallback() {
+                @Override
+                public void onMapReady(GoogleMap googleMap) {
+                    map = googleMap;
+                    Util.setupMap(getActivity(), map);
+                }
+            });
+
+
             return rootView;
         }
 

@@ -1,6 +1,7 @@
 package local.hamish.trackbus;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
@@ -134,7 +135,7 @@ class TraditionalApiBoard {
         }
 
         @Override // Allows sorting by scheduled times
-        public int compareTo(Items o) {
+        public int compareTo(@NonNull Items o) {
             return scheduledDate.compareTo(o.scheduledDate);
         }
     }

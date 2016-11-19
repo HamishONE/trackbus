@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -51,7 +52,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -60,13 +61,13 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
+        myDB.close();
 
         readFavourites();
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:
@@ -134,6 +135,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
     private void deleteAll() {
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         myDB.execSQL("DELETE FROM Favourites;");
+        myDB.close();
         // Reset view
         listCount = 0;
         readFavourites();
@@ -173,6 +175,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         listCount = i;
 
         resultSet.close();
+        myDB.close();
         produceView();
     }
 
@@ -190,7 +193,6 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         });
 
         final FavouritesActivity favouritesActivity = this;
-        final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
 
         // Change userName on long click
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -199,8 +201,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
                 String stopID = stopArray[pos];
                 String stopName = nameArray[pos];
                 String oldUserName = userNameArray[pos];
-                FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), myDB, null, stopID,
-                        stopName, favouritesActivity);
+                FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), null, stopID, stopName, favouritesActivity);
                 favStopsHelper.showDialog(pos, oldUserName);
                 return true;
             }
@@ -227,7 +228,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public @NonNull View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.favourites_row_layout, parent, false);
 
@@ -242,12 +243,12 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
             return rowView;
         }
 
-
         @Override
         public void remove(String stopID) {
             SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
             myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
             myDB.execSQL("DELETE FROM Favourites WHERE stopID=" + stopID + ";");
+            myDB.close();
         }
 
         @Override
@@ -277,6 +278,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
                         myDB.execSQL("INSERT INTO Favourites VALUES(" + stopArray[index] + ",'" + nameArray[index] + "','"
                                 + userNameArray[index] + "');");
                     }
+                    myDB.close();
                     readFavourites();
                 }
             };
@@ -287,6 +289,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
                 public void remove(int which) {
                     SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
                     myDB.execSQL("DELETE FROM Favourites WHERE stopID=" + stopArray[which] + ";");
+                    myDB.close();
                     readFavourites();
                 }
             };
