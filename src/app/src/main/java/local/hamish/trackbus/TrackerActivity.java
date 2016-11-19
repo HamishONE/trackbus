@@ -107,6 +107,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
+        myDB.close();
 
         // Link to header TextViews
         tvStops = (TextView) findViewById(R.id.stop_info);
@@ -159,6 +160,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         double lat = resultSet.getDouble(0);
         double lon = resultSet.getDouble(1);
         resultSet.close();
+        myDB.close();
         map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
 
         // Call API

@@ -140,6 +140,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
+        myDB.close();
         navigationView.getMenu().getItem(0).setChecked(true);
         navigationView.getMenu().getItem(1).setChecked(false);
     }
@@ -304,32 +305,43 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private void findBounds() {
 
         VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
+        final LatLng upperRight = visibleRegion.farRight;
+        final LatLng lowerLeft = visibleRegion.nearLeft;
 
-        LatLng upperRight = visibleRegion.farRight;
-        LatLng lowerLeft = visibleRegion.nearLeft;
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
 
-        double minLat = lowerLeft.latitude;
-        double maxLat = upperRight.latitude;
-        double minLon = lowerLeft.longitude;
-        double maxLon = upperRight.longitude;
+                double minLat = lowerLeft.latitude;
+                double maxLat = upperRight.latitude;
+                double minLon = lowerLeft.longitude;
+                double maxLon = upperRight.longitude;
 
-        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        Cursor resultSet = myDB.rawQuery("SELECT * FROM Stops" +
-                " WHERE lat BETWEEN " + String.valueOf(minLat) + " AND " + String.valueOf(maxLat) +
-                " AND lon BETWEEN " + String.valueOf(minLon) + " AND " + String.valueOf(maxLon), null);
-        resultSet.moveToFirst();
+                SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+                Cursor resultSet = myDB.rawQuery("SELECT * FROM Stops" +
+                        " WHERE lat BETWEEN " + String.valueOf(minLat) + " AND " + String.valueOf(maxLat) +
+                        " AND lon BETWEEN " + String.valueOf(minLon) + " AND " + String.valueOf(maxLon), null);
+                resultSet.moveToFirst();
+                int i;
+                for (i = 0; i < resultSet.getCount(); i++) {
+                    stops[i][0] = String.valueOf(resultSet.getInt(0));
+                    stops[i][1] = String.valueOf(resultSet.getDouble(1));
+                    stops[i][2] = String.valueOf(resultSet.getDouble(2));
+                    stops[i][3] = resultSet.getString(3);
+                    resultSet.moveToNext();
+                }
+                resultSet.close();
+                myDB.close();
 
-        int i;
-        for (i = 0; i < resultSet.getCount(); i++) {
-            stops[i][0] = String.valueOf(resultSet.getInt(0));
-            stops[i][1] = String.valueOf(resultSet.getDouble(1));
-            stops[i][2] = String.valueOf(resultSet.getDouble(2));
-            stops[i][3] = resultSet.getString(3);
-            resultSet.moveToNext();
-        }
-
-        resultSet.close();
-        fillMap(i);
+                final int i_f = i;
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        fillMap(i_f);
+                    }
+                });
+            }
+        };
+        thread.start();
 
     }
 
@@ -351,6 +363,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             myDB.execSQL("DELETE FROM Stops;");
             getStops(ATApi.data.apiRoot() + ATApi.data.stops + ATApi.getAuthorization());
         }
+
+        myDB.close();
     }
 
     // Loads the stop list from JSON into the database
@@ -388,6 +402,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                     } catch (JSONException e) {e.printStackTrace();}
                 }
                 myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
+                myDB.close();
 
                 MainActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
@@ -422,8 +437,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
             @Override
             public void onProgress(long bytesWritten, long totalSize) {
-                long progressPercentage = (long)100*bytesWritten/totalSize;
-                dialog.setMessage("Downloading from server (" + progressPercentage + "%)");
+                //long progressPercentage = (long)100*bytesWritten/totalSize;
+                dialog.setMessage("Downloading from server (" + bytesWritten*100/4670000 + "%)");
             }
 
             @Override

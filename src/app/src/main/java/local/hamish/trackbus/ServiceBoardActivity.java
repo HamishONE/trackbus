@@ -107,7 +107,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.addStop(stopID, stopName);
-
+        myDB.close();
 
         // Setup update button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -117,7 +117,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 updateData(false);
             }
         });
-
 
         if (Util.findStopType(stopName) == 0) {
             mViewPager.setCurrentItem(1, false); // Show new data first for buses
@@ -147,7 +146,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         //if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         oldApiBoard = new TraditionalApiBoard(this, stopID);
         oldApiBoard.callAPI();
-
 
     }
 
@@ -317,8 +315,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     // Add current stop to favourites table in database
     private void changeFavourite() {
-        final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), myDB, this, stopID, stopName, null);
+        FavStopsHelper favStopsHelper = new FavStopsHelper(getApplicationContext(), this, stopID, stopName, null);
         favStopsHelper.changeFavourite();
     }
 
@@ -447,15 +444,14 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         // Check if stop exists
         if (resultSet.getCount() != 0) {
             // If so use filled icon
-            //myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_filled));
             myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_filled));
         } else {
             // If not use hollow icon
-            //myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_hollow));
             myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_hollow));
         }
         // Close cursor
         resultSet.close();
+        myDB.close();
     }
 
     // Changes visibility of terminating services
@@ -521,6 +517,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
             if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
             resultSet.close();
+            myDB.close();
 
             return rowView;
         }
@@ -573,6 +570,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
             if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
             resultSet.close();
+            myDB.close();
 
             return rowView;
         }

@@ -15,16 +15,14 @@ class FavStopsHelper {
 
     private Context app;
     private ServiceBoardActivity parent;
-    private SQLiteDatabase myDB;
     private String stopID;
     private String stopName;
     private FavouritesActivity favouritesActivity;
     private int pos;
 
-    FavStopsHelper(Context app, SQLiteDatabase myDB, ServiceBoardActivity parent, String stopID,
+    FavStopsHelper(Context app, ServiceBoardActivity parent, String stopID,
                           String stopName, FavouritesActivity favouritesActivity) {
         this.app = app;
-        this.myDB = myDB;
         this.parent = parent;
         this.stopID = stopID;
         this.stopName = stopName;
@@ -32,6 +30,8 @@ class FavStopsHelper {
     }
 
     void changeFavourite() {
+
+        SQLiteDatabase myDB = app.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
 
         // Open or create database and create favourites table if needed
         myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
@@ -52,9 +52,13 @@ class FavStopsHelper {
             Toast.makeText(app, "Removed from favourites", Toast.LENGTH_LONG).show();
             parent.changeHeartIcon();
         }
+
+        myDB.close();
     }
 
     private void finishAddFavourite(String userName) {
+
+        SQLiteDatabase myDB = app.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
 
         // If rename
         if (parent == null) {
@@ -71,6 +75,8 @@ class FavStopsHelper {
         }
 
         myDB.execSQL("INSERT INTO Favourites VALUES(" + stopID + ",'" + stopName + "','" + userName + "');");
+        myDB.close();
+
         Toast.makeText(app, "Added to favourites", Toast.LENGTH_LONG).show();
         parent.changeHeartIcon();
     }
