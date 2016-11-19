@@ -161,7 +161,7 @@ class AdvancedApiBoard {
                             }
                         }
                         if (stopDict == null) {
-                            if (schTime.after(new Date())) {
+                            if (schTime.after(GregorianCalendar.getInstance())) {
                                 // Make strings blank
                                 stopsAwayStr = "";
                                 dueStr = "";
@@ -202,7 +202,7 @@ class AdvancedApiBoard {
                     out.tripArray[out.count] = tripDataTrip;
                     out.stopSeqArray[out.count] = 100;
 
-                    if (schTime.after(new Date())) {
+                    if (schTime.after(GregorianCalendar.getInstance())) {
                         // Make strings blank
                         stopsAwayStr = "";
                         dueStr = "";
