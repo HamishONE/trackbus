@@ -12,6 +12,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -46,14 +48,14 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import java.util.Arrays;
 
-public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback  {
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     // Miscellaneous vars
     public String stopID = null;
     public static String stopName = null; // static to support changing fragment header
     private Menu myMenu = null;
     private boolean showTerminating = false;
-    private GoogleMap map;
+    static private GoogleMap map;
     private boolean firstTime = true;
     RecentStops recentStops;
     private boolean active = true;
@@ -91,7 +93,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -145,6 +147,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         //if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         oldApiBoard = new TraditionalApiBoard(this, stopID);
         oldApiBoard.callAPI();
+
+
     }
 
     @Override
@@ -177,7 +181,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:
@@ -228,7 +232,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         myMenu.getItem(1).setChecked(showTerminating);
         mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setOnPageChangeListener(
+        mViewPager.addOnPageChangeListener(
                 new ViewPager.SimpleOnPageChangeListener() {
                     @Override
                     public void onPageSelected(int position) {
@@ -362,21 +366,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         if (firstTime) {
 
             firstTime = false;
-            ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
-
-        } else {
-            allBusesHelper.callAPI(out);
+            View circle = findViewById(R.id.loadingPanelMap);
+            allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
         }
-    }
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-
-        map = googleMap;
-        Util.setupMap(this, map);
-
-        View circle = findViewById(R.id.loadingPanelMap);
-        allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
         allBusesHelper.callAPI(out);
     }
 
@@ -454,10 +447,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         // Check if stop exists
         if (resultSet.getCount() != 0) {
             // If so use filled icon
-            myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_filled));
+            //myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_filled));
+            myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_filled));
         } else {
             // If not use hollow icon
-            myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_hollow));
+            //myMenu.getItem(0).setIcon(getResources().getDrawable(R.drawable.heart_icon_hollow));
+            myMenu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.heart_icon_hollow));
         }
         // Close cursor
         resultSet.close();
@@ -481,14 +476,15 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         private final Context context;
         private final String[] values;
 
-        public OldArrayAdapter(Context context, String[] values) {
+        OldArrayAdapter(Context context, String[] values) {
             super(context, -1, values);
             this.context = context;
             this.values = values;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
 
@@ -542,7 +538,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
 
@@ -602,7 +599,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 fragment = new MapFragment();
                 args.putInt(MapFragment.ARG_OBJECT, i + 1);
             }
-            fragment.setArguments(args);
+            //fragment.setArguments(args);
             return fragment;
         }
 
@@ -620,7 +617,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_new_api, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
             return rootView;
         }
@@ -633,7 +630,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_old_api, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
 
             // Change column header to pier/platform as appropriate
             switch (Util.findStopType(ServiceBoardActivity.stopName)) {
@@ -667,8 +664,20 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_all_buses, container, false);
-            Bundle args = getArguments();
+            //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
+
+            // Setup map
+            ((com.google.android.gms.maps.MapFragment) getActivity().getFragmentManager().findFragmentById(R.id.map))
+                    .getMapAsync(new OnMapReadyCallback() {
+                @Override
+                public void onMapReady(GoogleMap googleMap) {
+                    map = googleMap;
+                    Util.setupMap(getActivity(), map);
+                }
+            });
+
+
             return rootView;
         }
 

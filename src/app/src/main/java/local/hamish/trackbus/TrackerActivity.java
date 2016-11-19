@@ -1,12 +1,10 @@
 package local.hamish.trackbus;
 
-import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -16,9 +14,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -100,7 +98,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -124,18 +122,24 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
 
         // Set activity title using special names if possible
-        if (route.equals("SKY")) {
-            title = "SkyBus";
-        } else if (route.equals("INN")) {
-            title = "Inner Link";
-        } else if (route.equals("CTY")) {
-            title = "City Link";
-        } else if (route.equals("OUT")) {
-            title = "Outer Link";
-        } else if (route.equals("NEX")) {
-            title = "Northern Express";
-        } else {
-            title = "Route " + route;
+        switch(route) {
+            case "SKY":
+                title = "SkyBus";
+                break;
+            case "INN":
+                title = "Inner Link";
+                break;
+            case "CTY":
+                title = "City Link";
+                break;
+            case "OUT":
+                title = "Outer Link";
+                break;
+            case "NEX":
+                title = "Northern Express";
+                break;
+            default:
+                title = "Route " + route;
         }
         setTitle(title);
 
@@ -192,7 +196,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:

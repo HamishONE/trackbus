@@ -1,6 +1,7 @@
 package local.hamish.trackbus;
 
 import android.*;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -10,6 +11,8 @@ import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.view.View;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.text.ParseException;
@@ -103,6 +106,21 @@ final class Util {
         map.getUiSettings().setRotateGesturesEnabled(false);
         map.getUiSettings().setMapToolbarEnabled(false);
         map.getUiSettings().setTiltGesturesEnabled(false);
+    }
+
+    public static boolean checkPlayServices(Activity context) {
+
+        final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        int result = googleAPI.isGooglePlayServicesAvailable(context);
+        if(result != ConnectionResult.SUCCESS) {
+            if(googleAPI.isUserResolvableError(result)) {
+                googleAPI.getErrorDialog(context, result, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+            }
+            return false;
+        }
+        return true;
     }
 
 }

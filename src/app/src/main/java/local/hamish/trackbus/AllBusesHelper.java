@@ -30,9 +30,8 @@ class AllBusesHelper {
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
     private FavouritesHelper favouritesHelper;
-    private AdvancedApiBoard.Output out;
 
-    private HashMap<Marker, Integer> mHashMap = new HashMap<Marker, Integer>();
+    private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
     // Constructor
     AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map, FavouritesHelper favouritesHelper) {
@@ -47,7 +46,6 @@ class AllBusesHelper {
         this.tripsArray = out.tripArray;
         this.routesArray = out.routeArray;
         this.stopSeqArray = out.stopSeqArray;
-        this.out = out;
 
         String allTrips = "&tripid=";
         for (int i = 0; i < out.count; i++) {

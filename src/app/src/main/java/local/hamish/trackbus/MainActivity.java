@@ -1,7 +1,6 @@
 package local.hamish.trackbus;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -20,20 +19,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -43,7 +38,6 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -81,7 +75,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -89,12 +83,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         //navigationView.getMenu().getItem(1).setChecked(false);
 
         // Check for google play services and prompt download if needed
-        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (status != ConnectionResult.SUCCESS) {
-            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(status, this, 10);
-            dialog.show();
-            return;
-        }
+        if (!Util.checkPlayServices(this)) return;
 
         // Link to map fragment and setup as desired
         ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
@@ -116,7 +105,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         Util.setupMap(this, map);
-        map.setOnCameraChangeListener(getCameraChangeListener());
+        map.setOnCameraIdleListener(getCameraChangeListener());
 
         loadStops(false);
         zoomToLoc();
@@ -156,10 +145,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     }
 
     // Listens for change in map zoom or location
-    public GoogleMap.OnCameraChangeListener getCameraChangeListener() {
-        return new GoogleMap.OnCameraChangeListener() {
+    public GoogleMap.OnCameraIdleListener getCameraChangeListener() {
+        return new GoogleMap.OnCameraIdleListener() {
             @Override
-            public void onCameraChange(CameraPosition position) {
+            public void onCameraIdle() {
                 float zoom = map.getCameraPosition().zoom;
                 if (zoom < 15) {
                     if (isVisible) {
@@ -195,7 +184,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Intent intent = null;
         switch (item.getItemId()) {
             case R.id.go_main:
