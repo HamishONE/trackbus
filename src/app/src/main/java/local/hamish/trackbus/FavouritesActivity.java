@@ -22,6 +22,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.mobeta.android.dslv.DragSortListView;
+import com.nullwire.trace.ExceptionHandler;
+
 import java.util.Arrays;
 
 public class FavouritesActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -37,6 +39,8 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourites);
+
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

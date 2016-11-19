@@ -40,6 +40,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.nullwire.trace.ExceptionHandler;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,6 +89,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tracker);
+
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 

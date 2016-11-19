@@ -46,6 +46,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
+import com.nullwire.trace.ExceptionHandler;
+
 import java.util.Arrays;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -74,6 +76,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_board);
+
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup tabs
         DemoCollectionPagerAdapter mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(getSupportFragmentManager());
@@ -136,7 +140,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         showTerminating = settings.getBoolean("showTerminating", false);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
 
-        favouritesHelper = new FavouritesHelper(myDB, this);
+        favouritesHelper = new FavouritesHelper(this);
 
         //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
         newApiBoard = new AdvancedApiBoard(this, stopID, stopName, showTerminating, out);

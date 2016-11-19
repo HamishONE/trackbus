@@ -29,4 +29,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:9.8.0'
     compile 'com.loopj.android:android-async-http:1.4.9'
     compile project(':drag_sort_list')
+    compile files('libs/trace.jar')
 }
