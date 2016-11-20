@@ -96,12 +96,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         // Check if location permission has not yet been granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Check if permission has been requested before
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Request the permission.
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
+            // Request the permission.
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
         ATApi.getDrift();

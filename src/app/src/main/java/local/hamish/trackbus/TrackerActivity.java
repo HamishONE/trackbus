@@ -214,7 +214,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 break;
             case R.id.bus1:
-                onBackPressed();
+                finish();
                 break;
             case R.id.bus2:
                 intent = new Intent(this, ServiceBoardActivity.class);
