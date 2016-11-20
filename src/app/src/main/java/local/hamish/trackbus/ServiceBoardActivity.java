@@ -551,12 +551,13 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
             route.setText(out.routeArray[position]);
             scheduled.setText(out.schTimeArray[position]);
-            dueTime.setText(out.dueTimeArray[position]);
 
             if (!out.stopsAwayArray[position].equals("") && Integer.valueOf(out.stopsAwayArray[position]) < 1) {
-                stopsAway.setText("*");
+                stopsAway.setText("**");
+                dueTime.setText(getString(R.string.message_negative_stops_away));
             } else {
                 stopsAway.setText(out.stopsAwayArray[position]);
+                dueTime.setText(out.dueTimeArray[position]);
             }
 
             // Change colour of row if terminating
@@ -637,10 +638,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             // Change column header to pier/platform as appropriate
             switch (Util.findStopType(ServiceBoardActivity.stopName)) {
                 case 1:
-                    ((TextView) rootView.findViewById(R.id.routeHed)).setText("Plat.");
+                    ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.train_platform_label));
                     break;
                 case 2:
-                    ((TextView) rootView.findViewById(R.id.routeHed)).setText("Pier");
+                    ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.ferry_pier_label));
             }
 
             /*
