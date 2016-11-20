@@ -25,8 +25,8 @@ class AdvancedApiBoard {
     private String stopName;
     private boolean showTerminating;
     private Output out;
-    boolean active = true;
     private JSONArray tripData = null;
+    boolean active = true;
     private JSONArray stopData = null;
 
     // Constructor
@@ -165,6 +165,7 @@ class AdvancedApiBoard {
                                 // Make strings blank
                                 stopsAwayStr = "";
                                 dueStr = "";
+                                out.tripArray[out.count] = tripDataTrip; //todo: CHECK
                             } else {
                                 continue; //Skips to next iteration
                             }
@@ -233,7 +234,7 @@ class AdvancedApiBoard {
             } catch (JSONException e) {e.printStackTrace();}
         }
         if (active && (isNew || incStops)) serviceBoardActivity.produceView(incStops);
-        if (active && incStops) serviceBoardActivity.allBusesHelper.simplify(out.tripArray, out.routeArray, out.stopSeqArray);
+        if (active && incStops) serviceBoardActivity.allBusesHelper.simplify(/*out.tripArray, out.routeArray, out.stopSeqArray*/);
     }
 
     // Extract trip ids relevant to route from tripData and call stopData for these

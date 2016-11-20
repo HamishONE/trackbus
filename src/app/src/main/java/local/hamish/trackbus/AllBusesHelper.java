@@ -19,9 +19,7 @@ import java.util.Locale;
 
 class AllBusesHelper {
 
-    private String[] tripsArray = new String[1000];
-    private String[] routesArray = new String[1000];
-    private int[] stopSeqArray = new int[1000];
+    private AdvancedApiBoard.Output out;
     private GoogleMap map;
     private JSONArray locData;
     Marker[] markers = new Marker[1000];
@@ -33,19 +31,18 @@ class AllBusesHelper {
 
     private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
-    // Constructor
-    AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map, FavouritesHelper favouritesHelper) {
+    // Constructor //todo: remove favouritesHelper req
+    AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.map = map;
         this.circle = circle;
-        this.favouritesHelper = favouritesHelper;
+        favouritesHelper = new FavouritesHelper(serviceBoardActivity);
     }
 
     // Calls the API
     void callAPI(AdvancedApiBoard.Output out) {
-        this.tripsArray = out.tripArray;
-        this.routesArray = out.routeArray;
-        this.stopSeqArray = out.stopSeqArray;
+
+        this.out = out;
 
         String allTrips = "&tripid=";
         for (int i = 0; i < out.count; i++) {
@@ -56,10 +53,7 @@ class AllBusesHelper {
     }
 
     // Calls the API
-    void simplify(String[] tripsArray, String[] routesArray, int[] stopSeqArray) {
-        this.tripsArray = tripsArray;
-        this.routesArray = routesArray;
-        this.stopSeqArray = stopSeqArray;
+    void simplify() {
 
         if (locData != null) main();
     }
@@ -97,26 +91,28 @@ class AllBusesHelper {
 
         // Remove existing markers
         for (int i=0; i<markLen; i++) {markers[i].remove();}
+        markLen = 0;
+        mHashMap.clear();
 
         try {
-            for (int i = 0; i < tripsArray.length; i++) {
+            for (int i = 0; i < out.count; i++) {
 
-                if (tripsArray[i] == null) continue;
+                if (out.tripArray[i] == null) continue;
 
                 for (int j = 0; j < locData.length(); j++) {
                     locTripID = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("trip").getString("trip_id");
-                    if (tripsArray[i].equals(locTripID)) {
+                    if (out.tripArray[i].equals(locTripID)) {
                         lat = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("latitude");
                         lon = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
                         latLng = new LatLng(lat, lon);
 
                         Marker marker;
-                        if (favouritesHelper.isFavRoute(routesArray[i])) {
-                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(routesArray[i])
+                        if (favouritesHelper.isFavRoute(out.routeArray[i])) {
+                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.routeArray[i])
                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.heart_icon_pink)));
                         } else {
-                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(routesArray[i]));
+                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.routeArray[i]));
                         }
                         markers[markLen++] = marker;
                         mHashMap.put(marker, i);
@@ -140,10 +136,10 @@ class AllBusesHelper {
             public void onInfoWindowClick(Marker arg0) {
                 String route = arg0.getTitle();
                 int pos = mHashMap.get(arg0);
-                String trip = tripsArray[pos];
-                int stopSeq = stopSeqArray[pos];
+                String trip = out.tripArray[pos];
+                int stopSeq = out.stopSeqArray[pos];
 
-                serviceBoardActivity.callTracker(trip, stopSeq, route, serviceBoardActivity.out.dateSchArray[pos]);
+                serviceBoardActivity.callTracker(trip, stopSeq, route, serviceBoardActivity.out.dateSchArray[pos]); //todo:rah!
             }
         });
     }

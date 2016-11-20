@@ -368,7 +368,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
             firstTime = false;
             View circle = findViewById(R.id.loadingPanelMap);
-            allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
+            allBusesHelper = new AllBusesHelper(this, circle, map);
         }
 
         allBusesHelper.callAPI(out);
