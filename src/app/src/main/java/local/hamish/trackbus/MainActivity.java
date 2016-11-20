@@ -24,6 +24,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import com.bluelinelabs.logansquare.LoganSquare;
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
+import com.bluelinelabs.logansquare.annotation.OnJsonParseComplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -36,10 +40,8 @@ import com.google.android.gms.maps.model.VisibleRegion;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.nullwire.trace.ExceptionHandler;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -51,7 +53,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private Marker[] stopMarkers = new Marker[10000];
     private int len = 0;
     private boolean isVisible = true;
-    private JSONArray stopListData;
+    private Response response;
     private ProgressDialog dialog;
     private RecentStops recentStops;
 
@@ -379,31 +381,27 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
 
                 String values = "";
-                for (int i = 0; i < stopListData.length(); i++) {
+                for (int i = 0; i < response.response.size(); i++) {
                     try {
-                        int location_type = stopListData.getJSONObject(i).getInt("location_type");
-                        if (location_type != 0) continue;
+                        Stop stop = response.response.get(i);
+                        if (stop.location_type != 0) continue;
 
-                        String stopID = stopListData.getJSONObject(i).getString("stop_id");
-                        String lat = stopListData.getJSONObject(i).getString("stop_lat");
-                        String lon = stopListData.getJSONObject(i).getString("stop_lon");
-                        String stopName = stopListData.getJSONObject(i).getString("stop_name");
-
-                        if (stopID.contains("_")) {
-                            int end = stopID.indexOf("_");
-                            stopID = stopID.substring(0, end);
+                        if (stop.stop_id.contains("_")) {
+                            int end = stop.stop_id.indexOf("_");
+                            stop.stop_id = stop.stop_id.substring(0, end);
                         }
-                        values += "(" + stopID + "," + lat + "," + lon + ",'" + stopName.replace("'", "''") + "')";
-                        if (i != stopListData.length()-1) values += ",";
+                        values += "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
+                                stop.stop_name.replace("'", "''") + "')";
+                        if (i != response.response.size()-1) values += ",";
 
                         final int num = i;
                         MainActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                dialog.setMessage("Processing data (" + num*100/stopListData.length() + "%)");
+                                dialog.setMessage("Processing data (" + num*100/response.response.size() + "%)");
                             }
                         });
 
-                    } catch (JSONException e) {e.printStackTrace();}
+                    } catch (Exception e) {e.printStackTrace();}
                 }
                 myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
                 myDB.close();
@@ -416,12 +414,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 });
             }
         };
-
-        //dialog.setTitle("Processing data");
         thread.start();
-
-        //findBounds();
-        //dialog.dismiss();
     }
 
     // Get trip data for one stop
@@ -432,11 +425,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
                 try {
                     String str = new String(responseBody);
-                    JSONObject jsonObject = new JSONObject(str);
+                    response = LoganSquare.parse(str, Response.class);
 
-                    stopListData = jsonObject.getJSONArray("response");
                     fillDatabase();
-                } catch (JSONException e) {e.printStackTrace();}
+
+                } catch (IOException e) {e.printStackTrace();}
             }
 
             @Override
@@ -474,5 +467,39 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         });
         snackbar.show();
     }
+
+}
+
+@JsonObject
+class Stop {
+
+    @JsonField
+    public int location_type;
+
+    @JsonField
+    public String stop_id;
+
+    @JsonField
+    public String stop_lat;
+
+    @JsonField
+    public String stop_lon;
+
+    @JsonField
+    public String stop_name;
+
+    @OnJsonParseComplete
+    void onParseComplete() {
+
+        String hi = this.stop_name;
+    }
+
+}
+
+@JsonObject
+class Response {
+
+    @JsonField
+    public List<Stop> response;
 
 }
