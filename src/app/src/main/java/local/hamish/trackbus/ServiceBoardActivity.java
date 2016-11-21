@@ -49,6 +49,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.nullwire.trace.ExceptionHandler;
 
 import java.util.Arrays;
+import java.util.Vector;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -67,7 +68,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public AdvancedApiBoard.Output out = new AdvancedApiBoard.Output();
+    public Vector<AdvancedApiBoard.OutputItem> out = new Vector<>();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
@@ -329,7 +330,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         if (b.length > 0) incStops = b[0];
 
         ListView mListView = (ListView) findViewById(R.id.new_list);
-        mListView.setAdapter(new CustomArrayAdapter(this, Arrays.copyOf(out.listArray, out.count))); //todo: listArray is just blank!
+        mListView.setAdapter(new CustomArrayAdapter(this, new String[out.size()])); //todo: listArray is just blank!
 
         // Remove loading bars
         if (incStops) {
@@ -344,8 +345,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 /*if (out.tripArray[position] == null) {
                     Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
                 } else*/ { //todo: replace
-                    callTracker(out.tripArray[position], out.stopSeqArray[position],
-                            out.routeArray[position], out.dateSchArray[position]);
+                    callTracker(out.get(position).trip, out.get(position).stopSequence,
+                            out.get(position).route, out.get(position).dateScheduled);
                 }
             }
         });
@@ -354,7 +355,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String route = out.routeArray[pos];
+                String route = out.get(pos).route;
                 favouritesHelper.changeFavRoute(route);
                 return true;
             }
@@ -371,7 +372,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             allBusesHelper = new AllBusesHelper(this, circle, map);
         }
 
-        allBusesHelper.callAPI(out);
+        allBusesHelper.callAPI();
     }
 
     // Produces the list view and waits for click
@@ -467,7 +468,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         editor.putBoolean("showTerminating", showTerminating);
         editor.apply();
 
-        out.count = 0;
         newApiBoard.changeTerminating(showTerminating);
     }
 
@@ -549,27 +549,27 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             TextView dueTime = ((TextView) rowView.findViewById(R.id.col3));
             TextView stopsAway = ((TextView) rowView.findViewById(R.id.col4));
 
-            route.setText(out.routeArray[position]);
-            scheduled.setText(out.schTimeArray[position]);
+            route.setText(out.get(position).route);
+            scheduled.setText(out.get(position).schTime);
 
-            if (!out.stopsAwayArray[position].equals("") && Integer.valueOf(out.stopsAwayArray[position]) < 1) {
+            if (!out.get(position).stopsAway.equals("") && Integer.valueOf(out.get(position).stopsAway) < 1) {
                 stopsAway.setText("**");
                 dueTime.setText(getString(R.string.message_negative_stops_away));
             } else {
-                stopsAway.setText(out.stopsAwayArray[position]);
-                dueTime.setText(out.dueTimeArray[position]);
+                stopsAway.setText(out.get(position).stopsAway);
+                dueTime.setText(out.get(position).dueTime);
             }
 
             // Change colour of row if terminating
-            if (out.terminatingArray[position]) {
+            if (out.get(position).isTerminating) {
                 rowView.setBackgroundColor(0x604D4D4D); //Dark grey
-            } else if (out.scheduledArray[position]) {
+            } else if (out.get(position).isScheduled) {
                 scheduled.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
             }
 
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            String routeName = out.routeArray[position];
+            String routeName = out.get(position).route;
             SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
             myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
