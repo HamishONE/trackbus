@@ -239,6 +239,7 @@ class AdvancedApiBoard {
 
     // Extract trip ids relevant to route from tripData and call stopData for these
     private void getStopDataWithTripIDs() {
+        /*
         String tripsForApi = "tripid=";
         int i;
         for (i = 0; i < tripData.length(); i++) {
@@ -249,6 +250,7 @@ class AdvancedApiBoard {
             } catch (JSONException e) {e.printStackTrace();}
         }
         out.count = i;
+        */
         if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
         //getStopData(tripsForApi);
     }

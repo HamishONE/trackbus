@@ -97,7 +97,9 @@ class AllBusesHelper {
         try {
             for (int i = 0; i < out.count; i++) {
 
-                if (out.tripArray[i] == null) continue;
+                if (out.tripArray[i] == null) {
+                    continue;
+                }
 
                 for (int j = 0; j < locData.length(); j++) {
                     locTripID = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("trip").getString("trip_id");

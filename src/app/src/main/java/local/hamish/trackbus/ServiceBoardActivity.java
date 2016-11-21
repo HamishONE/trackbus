@@ -329,7 +329,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         if (b.length > 0) incStops = b[0];
 
         ListView mListView = (ListView) findViewById(R.id.new_list);
-        mListView.setAdapter(new CustomArrayAdapter(this, Arrays.copyOf(out.listArray, out.count)));
+        mListView.setAdapter(new CustomArrayAdapter(this, Arrays.copyOf(out.listArray, out.count))); //todo: listArray is just blank!
 
         // Remove loading bars
         if (incStops) {
@@ -343,7 +343,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 /*if (out.tripArray[position] == null) {
                     Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
-                } else*/ {
+                } else*/ { //todo: replace
                     callTracker(out.tripArray[position], out.stopSeqArray[position],
                             out.routeArray[position], out.dateSchArray[position]);
                 }
