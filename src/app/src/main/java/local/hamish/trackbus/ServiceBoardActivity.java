@@ -365,9 +365,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     // Sets up the all buses view
     public void prepareMap() {
 
-        if (firstTime) {
+        if (allBusesHelper == null) {
 
-            firstTime = false;
             View circle = findViewById(R.id.loadingPanelMap);
             allBusesHelper = new AllBusesHelper(this, circle, map);
         }

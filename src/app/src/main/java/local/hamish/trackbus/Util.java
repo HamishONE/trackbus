@@ -11,6 +11,8 @@ import android.util.DisplayMetrics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +22,18 @@ import java.util.TimeZone;
 final class Util {
 
     private Util() {}
+
+    static LatLng fixTrainLocation(double lati, double longi) {
+
+        lati = lati*1.66 + 23.7564;
+        longi = longi*1.66 - 114.8370;
+
+        if (lati < -37.091) {
+            lati += 0.6639;
+        }
+
+        return new LatLng(lati, longi);
+    }
 
     // Converts time string to Date object using format, assumes NZST/NZDT
     static Date deformatTime(String s, String format) {

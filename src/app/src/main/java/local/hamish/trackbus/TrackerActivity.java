@@ -21,6 +21,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -265,6 +266,23 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         new DoReset().updateTime();
     }
 
+    /*
+    @Override
+    protected void onStop() {
+        super.onStop();
+        active = false;
+    }
+    */
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (!drawer.isDrawerOpen(GravityCompat.START)) {
+            stopCode();
+        }
+        super.onBackPressed();
+    }
+
     void stopCode() {
         active = false;
         mNotifyMgr.cancelAll();
@@ -301,35 +319,62 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         int secsAgo = 0;
         int delay = 0;
         JSONObject stopDict = null;
-        JSONObject locDict;
+        JSONObject locDict = null;
         Double bearingNew = null;
 
         try {
             // Get JSON Arrays
-            stopDict = newData.getJSONObject(0);
-            locDict = newData.getJSONObject(1);
+            //stopDict = newData.getJSONObject(0);
+            //locDict = newData.getJSONObject(1);
+
+            for (int i=0; i<newData.length(); i++) {
+                JSONObject obj = newData.getJSONObject(i);
+                if (obj.has("trip_update") && obj.getJSONObject("trip_update").getJSONObject("trip").
+                        getString("trip_id").equals(tripID)) {
+                    stopDict = obj;
+                }
+                if (obj.has("vehicle") && obj.getJSONObject("vehicle").getJSONObject("trip").
+                        getString("trip_id").equals(tripID)) {
+                    locDict = obj;
+                }
+            }
+
+            if (locDict == null) {
+                return;
+                //todo: show location not available message
+            }
 
             // Retrieve and calculate values
-            lat2 = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("latitude");
-            long2 = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
-            stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                    .getInt("stop_sequence");
+            JSONObject position =locDict.getJSONObject("vehicle").getJSONObject("position");
+            lat2 = position.getDouble("latitude");
+            long2 = position.getDouble("longitude");
+            if (position.has("bearing")) bearingNew = position.getDouble("bearing");
+
+            if (stopDict == null) {
+                stopsAway = 100; //todo: change
+            } else {
+                stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_sequence");
+            }
+
             lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
             secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
 
-            //** MUST BE LAST **//
-            bearingNew = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("bearing");
-
         } catch (JSONException e) {e.printStackTrace();}
 
-        try {
-            delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                    .getJSONObject("arrival").getInt("delay");
-        } catch (JSONException e) {
+        if (stopDict != null) { //todo: CLEAN UP!!!!
             try {
                 delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                        .getJSONObject("departure").getInt("delay");
-            } catch (JSONException f) {f.printStackTrace();}
+                        .getJSONObject("arrival").getInt("delay");
+            } catch (JSONException e) {
+                try {
+                    delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
+                            .getJSONObject("departure").getInt("delay");
+                } catch (JSONException f) {
+                    f.printStackTrace();
+                }
+            }
+        } else {
+            delay = 0; //todo: change
         }
 
         String notiText = "";
@@ -372,7 +417,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             notiText += "Stops: *";
             if (stopsAway < 0) return;
         } else {
-            tvStops.setText("Stops: " + Integer.toString(stopsAway));
+            tvStops.setText(String.format(Locale.US ,"Stops: %d", stopsAway));
             notiText += "Stops: " + Integer.toString(stopsAway);
         }
 
@@ -464,6 +509,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
+                if (!active) return;
                 try {
                     String str = new String(responseBody);
                     JSONObject jsonObject = new JSONObject(str);

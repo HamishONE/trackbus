@@ -51,9 +51,10 @@ class AdvancedApiBoard {
                 try {
                     String str = new String(responseBody);
                     JSONObject jsonObject = new JSONObject(str);
-
                     tripData = jsonObject.getJSONArray("response");
+
                     if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
+
                     produceBoard(isNew);
                 } catch (JSONException e) {e.printStackTrace();}
             }
@@ -80,8 +81,7 @@ class AdvancedApiBoard {
                     stopData = jsonObject.getJSONObject("response").getJSONArray("entity");
 
                 } catch (JSONException e) {e.printStackTrace();}
-                // Refresh board with new data
-                //out.clear();
+
                 produceBoard(true);
             }
 

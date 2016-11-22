@@ -17,20 +17,26 @@ class ATApi {
     public static class data {
 
         static String apiRoot() {
+            return ""; //todo: temp (fix from git before 22/11/2016)
+            /*
             if (currentApiVersion == API_VERSION.APIv2) {
                 return "https://api.at.govt.nz/v2/";
             } else  {
                 return "https://api.at.govt.nz/v1/";
-            }
+            }*/
         }
 
-        final static String stopInfo = "gtfs/stops/stopinfo/";
-        final static String vehicleLocations = "public-restricted/realtime/vehiclelocations/";
-        final static String tripUpdates = "public-restricted/realtime/tripUpdates/";
-        final static String realtime = "public-restricted/realtime/";
-        final static String shapeByTripId = "gtfs/shapes/tripId/";
-        final static String stops = "gtfs/stops";
-        final static String departures = "public-restricted/departures/";
+        private final static String ATRoot = "https://api.at.govt.nz/v2/";
+        private final static String HamishRoot = "http://hamishserver.ddns.net/buffer/";
+
+        final static String vehicleLocations = HamishRoot + "vehiclelocations.json";
+        final static String tripUpdates = HamishRoot + "tripupdates.json";
+        final static String realtime = HamishRoot + "realtime.json";
+
+        final static String stopInfo = ATRoot + "gtfs/stops/stopinfo/";
+        final static String shapeByTripId = ATRoot + "gtfs/shapes/tripId/";
+        final static String stops = ATRoot + "gtfs/stops";
+        final static String departures = ATRoot + "public-restricted/departures/";
     }
 
     // Returns string to append to api call

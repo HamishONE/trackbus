@@ -103,11 +103,18 @@ class AllBusesHelper {
                 }
 
                 for (int j = 0; j < locData.length(); j++) {
-                    locTripID = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("trip").getString("trip_id");
+                    JSONObject vehicle = locData.getJSONObject(j).getJSONObject("vehicle");
+                    locTripID = vehicle.getJSONObject("trip").getString("trip_id");
                     if (out.get(i).trip.equals(locTripID)) {
-                        lat = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("latitude");
-                        lon = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
-                        latLng = new LatLng(lat, lon);
+                        lat = vehicle.getJSONObject("position").getDouble("latitude");
+                        lon = vehicle.getJSONObject("position").getDouble("longitude");
+
+                        // todo: copy to tracker!
+                        if (vehicle.getJSONObject("trip").has("start_time")) {
+                            latLng = new LatLng(lat, lon);
+                        } else {
+                            latLng = Util.fixTrainLocation(lat, lon);
+                        }
 
                         Marker marker;
                         if (favouritesHelper.isFavRoute(out.get(i).route)) {
