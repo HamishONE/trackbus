@@ -318,6 +318,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         int stopsAway = 0;
         int secsAgo = 0;
         int delay = 0;
+        boolean isTrain = false;
         JSONObject stopDict = null;
         JSONObject locDict = null;
         Double bearingNew = null;
@@ -358,6 +359,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
             lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
             secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
+
+            isTrain = !locDict.getJSONObject("vehicle").getJSONObject("trip").has("start_time");
 
         } catch (JSONException e) {e.printStackTrace();}
 
@@ -428,7 +431,14 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             lat = lat2;
             longi = long2;
             if (bearingNew != null) bearing = bearingNew;
-            LatLng latLng = new LatLng(lat, longi);
+
+            LatLng latLng;
+            if (!isTrain) {
+                latLng = new LatLng(lat, longi);
+            } else {
+                latLng = Util.fixTrainLocation(lat, longi);
+            }
+
             drawMap(latLng);
         }
 

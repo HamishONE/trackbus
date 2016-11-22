@@ -109,7 +109,6 @@ class AllBusesHelper {
                         lat = vehicle.getJSONObject("position").getDouble("latitude");
                         lon = vehicle.getJSONObject("position").getDouble("longitude");
 
-                        // todo: copy to tracker!
                         if (vehicle.getJSONObject("trip").has("start_time")) {
                             latLng = new LatLng(lat, lon);
                         } else {
