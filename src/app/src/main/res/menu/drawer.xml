@@ -9,7 +9,7 @@
         <!-- todo: use bus icon -->
         <item
             android:id="@+id/go_all_buses"
-            android:icon="@drawable/map_icon"
+            android:icon="@drawable/bus_icon"
             android:title="All Vehicles" />
         <item
             android:id="@+id/go_favs"

@@ -159,14 +159,16 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Util.setupMap(this, map);
 
         // Add stop location to map
-        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
-        resultSet.moveToFirst();
-        double lat = resultSet.getDouble(0);
-        double lon = resultSet.getDouble(1);
-        resultSet.close();
-        myDB.close();
-        map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+        if (stopID != null) {
+            SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+            Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
+            resultSet.moveToFirst();
+            double lat = resultSet.getDouble(0);
+            double lon = resultSet.getDouble(1);
+            resultSet.close();
+            myDB.close();
+            map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+        }
 
         // Call API
         callApi();
@@ -417,7 +419,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         }, timeDelay);
     }
 
-    // Moves the market and repositions map
+    // Moves the marker and repositions map
     private void drawMap(LatLng latLng) {
 
         if (marker != null) marker.remove();
