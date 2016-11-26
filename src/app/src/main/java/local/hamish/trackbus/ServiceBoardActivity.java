@@ -185,41 +185,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent intent = null;
-        switch (item.getItemId()) {
-            case R.id.go_main:
-                intent = new Intent(this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.go_favs:
-                intent = new Intent(this, FavouritesActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.bus1:
-                //do nothing
-                break;
-            case R.id.bus2:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[1]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[1]);
-                break;
-            case R.id.bus3:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[2]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[2]);
-                break;
-            case R.id.bus4:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[3]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[3]);
-                break;
-            case R.id.bus5:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[4]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[4]);
-                break;
+
+        if (item.getItemId() != R.id.bus1) {
+            startActivity(getHamburgerIntent(recentStops, item));
         }
-        if (intent!=null) startActivity(intent);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -296,10 +265,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         super.onResume();
 
         new DoReset().updateTime();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.getMenu().getItem(0).setChecked(false);
-        navigationView.getMenu().getItem(1).setChecked(false);
     }
 
     private void changeTraditionalSource(boolean useMaxx) {
