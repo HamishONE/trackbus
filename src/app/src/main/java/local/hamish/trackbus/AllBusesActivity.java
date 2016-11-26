@@ -1,5 +1,6 @@
 package local.hamish.trackbus;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -13,18 +14,27 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
+import java.util.Vector;
+
+public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
+        CombinedApiRequest, RoutesReadyCallback {
 
     private GoogleMap map;
-    RecentStops recentStops;
+    private RecentStops recentStops;
+    private Vector<Marker> markers = new Vector<>(); //todo: needed?
+    private boolean areRoutesDone = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+        // Setup layout
         setContentView(R.layout.activity_all_buses);
 
         // Setup action bar
@@ -33,17 +43,20 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
         // Setup hamburger menu
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
-                R.string.navigation_drawer_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        //SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        //mapFragment.getMapAsync(this);
+        // Setup map
         ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+
+        // Get data
+        CombinedApiBoard combinedApiBoard = new CombinedApiBoard(this, this);
+        combinedApiBoard.updateData();
+        GetRoutes getRoutes = new GetRoutes(this, this);
+        getRoutes.updateData();
     }
 
     @Override
@@ -64,11 +77,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         map = googleMap;
         Util.setupMap(this, map);
         zoomToLoc(map);
-
-        // Add a marker in Sydney and move the camera
-        //LatLng sydney = new LatLng(-34, 151);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
     @Override // Prevents state resetting
@@ -83,5 +91,64 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         myDB.close();
 
         navigationView.getMenu().findItem(R.id.go_all_buses).setChecked(true);
+    }
+
+    @Override
+    public void done() {
+
+        if (!areRoutesDone) {
+            return;
+        }
+
+        markers.clear();
+        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+        String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name FROM LocData INNER JOIN Routes " +
+                "ON LocData.route_id = Routes.route_id";
+        Cursor resultSet = myDB.rawQuery(sql, null);
+        resultSet.moveToFirst();
+        for (int i = 0; i < resultSet.getCount(); i++) {
+            double latitude = resultSet.getDouble(0);
+            double longitude = resultSet.getDouble(1);
+            String start_time = resultSet.getString(2);
+            String trip_id = resultSet.getString(3);
+            String route = resultSet.getString(4);
+
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.title(route);
+
+            LatLng latLng;
+            if (!start_time.equals("")) {
+                latLng = new LatLng(latitude, longitude);
+            } else {
+                latLng = Util.fixTrainLocation(latitude, longitude);
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+            }
+            markerOptions.position(latLng);
+
+            Marker marker = map.addMarker(markerOptions);
+            marker.setTag(trip_id);
+
+            /*
+            if (/*favouritesHelper.isFavRoute(out.get(i).route) false) {
+                //marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.get(i).route)
+                        //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                //.icon(BitmapDescriptorFactory.fromResource(R.drawable.heart_icon_pink)));
+            } else {
+                marker =  map.addMarker(new MarkerOptions().position(latLng).title(route));
+            }
+            markers.add(marker);
+            */
+
+
+            resultSet.moveToNext();
+        }
+        resultSet.close();
+        myDB.close();
+    }
+
+    @Override
+    public void routesReady() {
+        areRoutesDone = true;
+        done();
     }
 }

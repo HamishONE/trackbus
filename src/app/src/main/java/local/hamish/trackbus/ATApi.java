@@ -37,6 +37,7 @@ class ATApi {
         final static String shapeByTripId = ATRoot + "gtfs/shapes/tripId/";
         final static String stops = ATRoot + "gtfs/stops";
         final static String departures = ATRoot + "public-restricted/departures/";
+        final static String routes = ATRoot + "gtfs/routes";
     }
 
     // Returns string to append to api call
