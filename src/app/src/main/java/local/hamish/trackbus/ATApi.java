@@ -3,6 +3,8 @@ package local.hamish.trackbus;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Date;
@@ -38,6 +40,8 @@ class ATApi {
         final static String stops = ATRoot + "gtfs/stops";
         final static String departures = ATRoot + "public-restricted/departures/";
         final static String routes = ATRoot + "gtfs/routes";
+
+        final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
     }
 
     // Returns string to append to api call

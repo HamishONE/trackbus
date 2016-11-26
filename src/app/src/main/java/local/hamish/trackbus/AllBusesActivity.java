@@ -9,18 +9,18 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -32,13 +32,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.Vector;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        CombinedApiRequest, RoutesReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener {
+        CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private GoogleMap map;
     private RecentStops recentStops;
-    //private Vector<Marker> markers = new Vector<>();
     private boolean areRoutesDone = false;
     private CombinedApiBoard combinedApiBoard;
+    private GetFerrys getFerrys;
+    private Vector<Marker> mainMarkers = new Vector<>();
+    private Vector<Marker> ferryMarkers = new Vector<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +74,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         combinedApiBoard.updateData();
         GetRoutes getRoutes = new GetRoutes(this, this);
         getRoutes.updateData();
+        getFerrys = new GetFerrys(this, this);
+        getFerrys.updateData();
     }
 
     @Override
@@ -112,11 +116,11 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void done() {
 
-        if (!areRoutesDone) {
-            return;
-        }
+        if (!areRoutesDone) return;
 
-        map.clear();
+        for (Marker marker : mainMarkers) {
+            marker.remove();
+        }
 
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing FROM LocData INNER JOIN Routes " +
@@ -177,6 +181,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
             Marker marker = map.addMarker(markerOptions);
             marker.setTag(trip_id);
+            mainMarkers.add(marker);
 
             resultSet.moveToNext();
         }
@@ -196,23 +201,71 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     public void onClick(View view) {
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         combinedApiBoard.updateData();
+        getFerrys.updateData();
     }
 
     @Override
     public void onInfoWindowClick(Marker marker) {
+
+        if (marker.getTag() == null) return;
+
         String route = marker.getTitle();
         String tripID = (String) marker.getTag();
 
-        int stopSeq = 100;
-        String stopID = null;
+        int stopSeq = 100; //todo: replace with null
         long schDate = 400;
 
         Intent intent = new Intent(this, TrackerActivity.class);
         intent.putExtra(EXTRA_TRIP_ID, tripID);
         intent.putExtra(EXTRA_STOP_SEQ, stopSeq);
         intent.putExtra(EXTRA_ROUTE, route);
-        intent.putExtra(EXTRA_STOP, stopID);
+        intent.putExtra(EXTRA_STOP, (String) null);
         intent.putExtra(EXTRA_SCH_DATE, schDate);
         startActivity(intent);
+    }
+
+    @Override
+    public void ferrysReady() {
+
+        for (Marker marker : ferryMarkers) {
+            marker.remove();
+        }
+
+        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+        String sql = "SELECT latitude, longitude, vessel FROM Ferrys";
+        Cursor resultSet = myDB.rawQuery(sql, null);
+        resultSet.moveToFirst();
+
+        for (int i = 0; i < resultSet.getCount(); i++) {
+
+            double latitude = resultSet.getDouble(0);
+            double longitude = resultSet.getDouble(1);
+            String vessel = resultSet.getString(2);
+
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.title(vessel);
+            markerOptions.position(new LatLng(latitude, longitude));
+
+            int width = (int) Util.convertDpToPixel(20, this);
+            int height = (int) Util.convertDpToPixel(20, this);
+
+            Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(resizedBitmap);
+            Drawable shape = ContextCompat.getDrawable(this, R.drawable.marker_ferry);
+            shape.setBounds(0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
+            shape.draw(canvas);
+
+            //Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_ferry);
+            //Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+            Marker marker = map.addMarker(markerOptions);
+            marker.setTag(null);
+            ferryMarkers.add(marker);
+
+            resultSet.moveToNext();
+        }
+        resultSet.close();
+        myDB.close();
     }
 }
