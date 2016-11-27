@@ -18,9 +18,10 @@ class GetFerrys {
     static private JSONArray apiResponse;
     private SQLiteDatabase myDB = null;
     private FerrysReadyCallback callback;
+    private Context context;
 
     GetFerrys(Context context, FerrysReadyCallback callback) {
-        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        this.context = context;
         this.callback = callback;
     }
 
@@ -44,6 +45,9 @@ class GetFerrys {
 
     private void processData() {
 
+        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        myDB.beginTransaction();
+
         String cols = "vessel TEXT, latitude REAL, longitude REAL, timestamp STRING";
         myDB.execSQL("DROP TABLE IF EXISTS Ferrys");
         myDB.execSQL("CREATE TABLE Ferrys (" + cols + ");");
@@ -55,6 +59,8 @@ class GetFerrys {
             } catch (JSONException e) { e.printStackTrace(); }
         }
 
+        myDB.setTransactionSuccessful();
+        myDB.endTransaction();
         callback.ferrysReady();
     }
 

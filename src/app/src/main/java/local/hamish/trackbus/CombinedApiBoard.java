@@ -18,9 +18,10 @@ class CombinedApiBoard {
     static private JSONArray apiResponse;
     private SQLiteDatabase myDB = null;
     private CombinedApiRequest combinedApiRequest;
+    private Context context;
 
     CombinedApiBoard(Context context, CombinedApiRequest combinedApiRequest) {
-        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        this.context = context;
         this.combinedApiRequest = combinedApiRequest;
     }
 
@@ -102,6 +103,8 @@ class CombinedApiBoard {
 
     private void processData() {
 
+        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+
         /*
         String cols0 = "trip_id TEXT, route_id TEXT, vehicle_id TEXT, stop_sequence INTEGER, " +
                 "stop_id INTEGER, delay INTEGER, start_time TEXT, latitude REAl, longitude REAL, " +
@@ -132,6 +135,7 @@ class CombinedApiBoard {
         }
         myDB.setTransactionSuccessful();
         myDB.endTransaction();
+        myDB.close();
 
         combinedApiRequest.done(true);
     }

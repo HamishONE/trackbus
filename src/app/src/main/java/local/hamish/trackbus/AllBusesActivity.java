@@ -99,7 +99,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
         map = googleMap;
         Util.setupMap(this, map);
-        zoomToLoc(map);
+        zoomToLoc(map, 14);
         map.setOnInfoWindowClickListener(this);
         map.setOnCameraIdleListener(this);
     }

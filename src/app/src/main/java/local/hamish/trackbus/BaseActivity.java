@@ -87,7 +87,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // Zooms map to current location or CBD if not available
-    protected void zoomToLoc(GoogleMap map) {
+    protected void zoomToLoc(GoogleMap map, float zoom) {
 
         Location location;
 
@@ -100,9 +100,9 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         if (location != null) {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17));
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), zoom));
         } else {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 15));
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 14));
         }
     }
 

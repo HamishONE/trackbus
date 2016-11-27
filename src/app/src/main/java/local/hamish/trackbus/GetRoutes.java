@@ -20,9 +20,10 @@ class GetRoutes {
     static private JSONArray apiResponse;
     private SQLiteDatabase myDB = null;
     private RoutesReadyCallback callback;
+    private Context context;
 
     GetRoutes(Context context, RoutesReadyCallback callback) {
-        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        this.context = context;
         this.callback = callback;
     }
 
@@ -46,6 +47,9 @@ class GetRoutes {
 
     private void processData() {
 
+        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        myDB.beginTransaction();
+
         String cols = "route_id TEXT, route_short_name TEXT, route_long_name TEXT, route_type INTEGER";
         myDB.execSQL("DROP TABLE IF EXISTS Routes");
         myDB.execSQL("CREATE TABLE Routes (" + cols + ");");
@@ -57,6 +61,9 @@ class GetRoutes {
             } catch (JSONException e) { e.printStackTrace(); }
         }
 
+        myDB.setTransactionSuccessful();
+        myDB.endTransaction();
+        myDB.close();
         callback.routesReady();
     }
 

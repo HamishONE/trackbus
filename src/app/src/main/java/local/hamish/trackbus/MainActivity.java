@@ -42,7 +42,8 @@ import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
-    static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+    private static final float INITIAL_ZOOM = 17;
 
     private String[][] stops = new String[10000][4];
     private GoogleMap map = null;
@@ -107,7 +108,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         map.setOnCameraIdleListener(getCameraChangeListener());
 
         loadStops(false);
-        zoomToLoc(map);
+        zoomToLoc(map, INITIAL_ZOOM);
     }
 
     @Override
@@ -124,7 +125,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         e.printStackTrace();
                     }
                 }
-                zoomToLoc(map);
+                zoomToLoc(map, INITIAL_ZOOM);
                 break;
             }
         }
@@ -150,7 +151,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             @Override
             public void onCameraIdle() {
                 float zoom = map.getCameraPosition().zoom;
-                if (zoom < 15) {
+                if (zoom < 14) {
                     if (isVisible) {
                         for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
                         isVisible = false;
