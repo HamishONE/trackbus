@@ -12,6 +12,10 @@
     <dimen name="board_left_padding">10dp</dimen>
     <dimen name="board_right_padding">15dp</dimen>
 
+    <!-- Add stop dialogue -->
+    <dimen name="stop_dialogue_margin_left">20dp</dimen>
+    <dimen name="stop_dialogue_margin_right">10dp</dimen>
+
     <!-- Tracker -->
     <dimen name="route_line_thickness">2dp</dimen>
 

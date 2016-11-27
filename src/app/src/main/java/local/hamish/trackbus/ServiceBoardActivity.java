@@ -137,7 +137,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         // Read terminating visibility
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         showTerminating = settings.getBoolean("showTerminating", false);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
 
@@ -158,7 +158,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
         if (useMaxx) menu.findItem(R.id.useMaxx).setChecked(true);
         else menu.findItem(R.id.useAT).setChecked(true);
@@ -427,7 +427,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private void changeTerminating() {
         myMenu.getItem(1).setChecked(showTerminating = !showTerminating);
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean("showTerminating", showTerminating);
         editor.apply();
