@@ -1,6 +1,7 @@
 package local.hamish.trackbus;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -16,9 +17,11 @@ import android.support.design.widget.NavigationView;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import com.google.android.gms.maps.GoogleMap;
@@ -34,7 +37,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnCameraIdleListener {
+        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener {
+
+    private static final String SETTING_SHOW_BUSES = "showBuses";
+    private static final String SETTING_SHOW_TRAINS = "showTrains";
+    private static final String SETTING_SHOW_FERRYS = "showFerrys";
 
     private GoogleMap map;
     private RecentStops recentStops;
@@ -74,12 +81,66 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
 
         // Get data
-        combinedApiBoard = new CombinedApiBoard(this, this);
-        combinedApiBoard.updateData();
         GetRoutes getRoutes = new GetRoutes(this, this);
         getRoutes.updateData();
+        combinedApiBoard = new CombinedApiBoard(this, this);
         getFerrys = new GetFerrys(this, this);
-        getFerrys.updateData();
+        onClick(null);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_all_buses, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+
+        switch (item.getItemId()) {
+
+            case R.id.action_bus:
+                boolean showBuses = !settings.getBoolean(SETTING_SHOW_BUSES, true);
+                editor.putBoolean(SETTING_SHOW_BUSES, showBuses);
+                if (showBuses) {
+                    item.setIcon(R.drawable.bus_icon_white);
+                } else {
+                    item.setIcon(R.drawable.bus_icon_grey);
+                }
+                editor.apply();
+                done(true);
+                return true;
+
+            case R.id.action_train:
+                boolean showTrains = !settings.getBoolean(SETTING_SHOW_TRAINS, true);
+                editor.putBoolean(SETTING_SHOW_TRAINS, showTrains);
+                if (showTrains) {
+                    item.setIcon(R.drawable.train_icon_white);
+                } else {
+                    item.setIcon(R.drawable.train_icon_grey);
+                }
+                editor.apply();
+                done(true);
+                return true;
+
+            case R.id.action_ferry:
+                boolean showFerrys = !settings.getBoolean(SETTING_SHOW_FERRYS, true);
+                editor.putBoolean(SETTING_SHOW_FERRYS, showFerrys);
+                if (showFerrys) {
+                    item.setIcon(R.drawable.ferry_icon_white);
+                } else {
+                    item.setIcon(R.drawable.ferry_icon_grey);
+                }
+                editor.apply();
+                ferrysReady();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -102,6 +163,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         zoomToLoc(map, 14);
         map.setOnInfoWindowClickListener(this);
         map.setOnCameraIdleListener(this);
+        map.setOnMarkerClickListener(this);
     }
 
     @Override
@@ -149,13 +211,17 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                 double maxLon = upperRight.longitude;
 
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-                String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing FROM LocData INNER JOIN Routes " +
-                        "ON LocData.route_id = Routes.route_id WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
+                String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing, timestamp FROM LocData " +
+                        "INNER JOIN Routes ON LocData.route_id = Routes.route_id WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
                         " AND longitude BETWEEN " + minLon + " AND " + maxLon;
                 Cursor resultSet = myDB.rawQuery(sql, null);
 
                 resultSet.moveToFirst();
                 for (int i = 0; i < resultSet.getCount(); i++) {
+
+                    SharedPreferences settings = getPreferences(MODE_PRIVATE);
+                    boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
+                    boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
 
                     double latitude = resultSet.getDouble(0);
                     double longitude = resultSet.getDouble(1);
@@ -163,16 +229,18 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     final String trip_id = resultSet.getString(3);
                     final String route = resultSet.getString(4);
                     int bearing = resultSet.getInt(5);
+                    final long timestamp = resultSet.getLong(6);
 
                     boolean alreadyExists = false;
-                    //Vector<String> trip_ids_2 = new Vector<>(trip_ids);
                     for (String trip : trip_ids) {
                         if (trip.equals(trip_id)) {
                             alreadyExists = true;
                             break;
                         }
                     }
-                    if (alreadyExists) {
+
+                    boolean isTrain = start_time.equals("");
+                    if (alreadyExists || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
                         resultSet.moveToNext();
                         continue;
                     }
@@ -184,7 +252,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
                     int img_id;
                     int height_dp;
-                    if (!start_time.equals("")) {
+                    if (!isTrain) {
                         img_id = R.drawable.marker_bus_blue;
                         height_dp = 40;
                     } else {
@@ -199,7 +267,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     Canvas canvas = new Canvas(imageBitmap);
                     Paint paint = new Paint();
                     paint.setColor(Color.WHITE);
-                    paint.setTextSize(/*Util.convertDpToPixel(30, this)*/ (float) (canvas.getDensity() / 6));
+                    paint.setTextSize((float) (canvas.getDensity() / 6));
                     paint.setTextAlign(Paint.Align.CENTER);
                     paint.setTypeface(Typeface.DEFAULT_BOLD);
 
@@ -224,7 +292,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     AllBusesActivity.this.runOnUiThread(new Runnable() {
                         public void run() {
                             Marker marker = map.addMarker(markerOptions_f);
-                            marker.setTag(new Tag(trip_id, route));
+                            marker.setTag(new Tag(trip_id, route, timestamp));
                             mainMarkers.add(marker);
                             trip_ids.add(trip_id);
                         }
@@ -255,18 +323,21 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override // Refresh button
     public void onClick(View view) {
 
-        Util.printTiming("Refresh pressed");
-
-        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-        combinedApiBoard.updateData();
-        getFerrys.updateData();
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+        if (settings.getBoolean(SETTING_SHOW_BUSES, true) || settings.getBoolean(SETTING_SHOW_TRAINS, true)) {
+            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE); //todo: should be one for ferrys too
+            combinedApiBoard.updateData();
+        }
+        if (settings.getBoolean(SETTING_SHOW_FERRYS, true)) {
+            getFerrys.updateData();
+        }
     }
 
     @Override
     public void onInfoWindowClick(Marker marker) {
 
         Tag tag = (Tag) marker.getTag();
-        if (tag.trip_id == null) return;
+        if (tag == null) return;
 
         String route = tag.route;
         String tripID = tag.trip_id;
@@ -289,6 +360,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         for (Marker marker : ferryMarkers) {
             marker.remove();
         }
+
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+        if (!settings.getBoolean(SETTING_SHOW_FERRYS, true)) return;
 
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         String sql = "SELECT latitude, longitude, vessel FROM Ferrys";
@@ -350,14 +424,26 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         }
     }
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        Tag tag = (Tag) marker.getTag();
+        if (tag != null) {
+            long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+            marker.setSnippet(diff + "s ago");
+        }
+        return false; //so that default behaviour occurs
+    }
+
     static private class Tag {
 
         String trip_id;
         String route;
+        long timestamp;
 
-        Tag (String trip_id, String route) {
+        Tag (String trip_id, String route, long timestamp) {
             this.trip_id = trip_id;
             this.route = route;
+            this.timestamp = timestamp;
         }
     }
 }

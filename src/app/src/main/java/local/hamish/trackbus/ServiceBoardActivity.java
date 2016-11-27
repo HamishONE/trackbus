@@ -269,7 +269,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     private void changeTraditionalSource(boolean useMaxx) {
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean("useMaxx", useMaxx);
         editor.apply();

@@ -1,0 +1,28 @@
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="local.hamish.trackbus.AllBusesActivity">
+
+    <item
+        android:id="@+id/action_bus"
+        android:orderInCategory="1"
+        android:title="Buses"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/bus_icon_white" />
+
+    <item
+        android:id="@+id/action_train"
+        android:orderInCategory="1"
+        android:title="Trains"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/train_icon_white" />
+
+    <item
+        android:id="@+id/action_ferry"
+        android:orderInCategory="1"
+        android:title="Ferry"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ferry_icon_white" />
+
+</menu>
