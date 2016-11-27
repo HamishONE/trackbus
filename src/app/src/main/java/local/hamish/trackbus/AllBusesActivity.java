@@ -89,6 +89,12 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        onClick(null);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_all_buses, menu);
         return true;

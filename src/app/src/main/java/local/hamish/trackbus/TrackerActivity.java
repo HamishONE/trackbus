@@ -289,6 +289,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             }
 
             if (locDict == null) {
+                Log.d("HamishDebug", "Loc Dict not found");
                 return;
                 //todo: show location not available message
             }
@@ -431,33 +432,20 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
         double pointLat = 0.0;
         double pointLong = 0.0;
-        LatLng[] routePoints = new LatLng[10000];
-        int j;
-        double dist;
-        double distMax = 1000;
-        int len = -1;
+        LatLng[] routePoints = new LatLng[pointData.length()];
 
-        for (j = 0; j < pointData.length(); j++) {
+        for (int j = 0; j < pointData.length(); j++) {
             try {
                 pointLat = pointData.getJSONObject(j).getDouble("shape_pt_lat");
                 pointLong = pointData.getJSONObject(j).getDouble("shape_pt_lon");
             } catch (JSONException e) {e.printStackTrace();}
 
-            if (len != -1) {
-                distMax = 1000;
-                for (int i = 0; i <= len; i++) {
-                    dist = Math.sqrt(Math.pow(pointLat - routePoints[i].latitude, 2)
-                            + Math.pow(pointLong - routePoints[i].longitude, 2)); // in degrees
-                    dist *= 60 * 1.85 * 1000; // in metres
-                    if (dist < distMax) distMax = dist;
-                }
-            }
-            if (distMax > 0.001) routePoints[++len] = new LatLng(pointLat, pointLong);
+            routePoints[j] = new LatLng(pointLat, pointLong);
         }
 
         map.addPolyline(new PolylineOptions()
-                .add(Arrays.copyOf(routePoints, len+1))
-                .width(5)
+                .add(routePoints)
+                .width(getResources().getDimensionPixelSize(R.dimen.route_line_thickness))
                 .color(Color.RED));
     }
 
@@ -475,7 +463,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                     newData = jsonObject.getJSONObject("response").getJSONArray("entity");
                     main();
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(); //todo: what are we doing?
+                    getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                    //handleError(-5);
                 }
             }
 
@@ -498,7 +488,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         circle.setVisibility(View.GONE);
         // Prepare message for snackbar
         String message;
-        if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
+        if (statusCode == -5) message = "JSON parsing error"; //todo: expand to other copies
+        else if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
         else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
