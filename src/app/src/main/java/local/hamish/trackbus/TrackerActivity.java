@@ -21,7 +21,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -42,7 +41,6 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.nullwire.trace.ExceptionHandler;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -128,25 +126,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
 
         // Set activity title using special names if possible
-        switch(route) {
-            case "SKY":
-                title = "SkyBus";
-                break;
-            case "INN":
-                title = "Inner Link";
-                break;
-            case "CTY":
-                title = "City Link";
-                break;
-            case "OUT":
-                title = "Outer Link";
-                break;
-            case "NEX":
-                title = "Northern Express";
-                break;
-            default:
-                title = "Route " + route;
-        }
+        title = Util.beautifyRouteName(route);
         setTitle(title);
 
         // Link to map fragment and show location if allowed

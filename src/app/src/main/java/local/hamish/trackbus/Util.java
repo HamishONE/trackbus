@@ -8,11 +8,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,6 +22,13 @@ import java.util.TimeZone;
 final class Util {
 
     private Util() {}
+
+    private static long start = System.nanoTime();
+    static void printTiming(String message) {
+        Log.d("HamishTiming", message + "  [after " + (System.nanoTime()-start)/1000 + "us]");
+        //Log.d("HamishTiming", message + "  [after " + (System.nanoTime()-start)/1000000 + "ms]");
+        start = System.nanoTime();
+    }
 
     static LatLng fixTrainLocation(double lati, double longi) {
 
@@ -131,6 +138,33 @@ final class Util {
             return false;
         }
         return true;
+    }
+
+    static String beautifyRouteName(String route) {
+        switch(route) {
+            case "SKY":
+                return "SkyBus";
+            case "INN":
+                return "Inner Link";
+            case "CTY":
+                return "City Link";
+            case "OUT":
+                return "Outer Link";
+            case "NEX":
+                return "Northern Express";
+            case "WEST":
+                return "Western Line";
+            case "STH":
+                return "Southern Line";
+            case "ONE":
+                return "Onehunga Line";
+            case "EAST":
+                return "Eastern Line";
+            case "PUK":
+                return "Pukekohe Shuttle";
+            default:
+                return "Route " + route;
+        }
     }
 
 }

@@ -28,11 +28,13 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import com.google.android.gms.maps.model.VisibleRegion;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener {
+        CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnCameraIdleListener {
 
     private GoogleMap map;
     private RecentStops recentStops;
@@ -41,6 +43,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private GetFerrys getFerrys;
     private Vector<Marker> mainMarkers = new Vector<>();
     private Vector<Marker> ferryMarkers = new Vector<>();
+    private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
+    private boolean isVisible = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +101,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         Util.setupMap(this, map);
         zoomToLoc(map);
         map.setOnInfoWindowClickListener(this);
+        map.setOnCameraIdleListener(this);
     }
 
     @Override
@@ -114,91 +119,144 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void done() {
+    public void done(final boolean doReplaceMarkers) {
 
         if (!areRoutesDone) return;
 
-        for (Marker marker : mainMarkers) {
-            marker.remove();
+        if (doReplaceMarkers) {
+            for (Marker marker : mainMarkers) {
+                marker.remove();
+            }
+            mainMarkers.clear();
+            trip_ids.clear();
         }
 
-        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing FROM LocData INNER JOIN Routes " +
-                "ON LocData.route_id = Routes.route_id";
-        Cursor resultSet = myDB.rawQuery(sql, null);
-        resultSet.moveToFirst();
-        for (int i = 0; i < resultSet.getCount(); i++) {
-            double latitude = resultSet.getDouble(0);
-            double longitude = resultSet.getDouble(1);
-            String start_time = resultSet.getString(2);
-            String trip_id = resultSet.getString(3);
-            String route = resultSet.getString(4);
-            int bearing = resultSet.getInt(5);
-
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.title(route);
-            markerOptions.rotation(bearing);
-
-            int img_id;
-            int height_dp;
-            if (!start_time.equals("")) {
-                markerOptions.position(new LatLng(latitude, longitude));
-                img_id = R.drawable.marker_bus_blue;
-                height_dp = 40;
-            } else {
-                markerOptions.position(Util.fixTrainLocation(latitude, longitude));
-                img_id = R.drawable.marker_train_purple;
-                height_dp = 50;
-            }
-
-            BitmapFactory.Options opt = new BitmapFactory.Options();
-            opt.inMutable = true;
-            Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), img_id, opt);
-
-            Canvas canvas = new Canvas(imageBitmap);
-            Paint paint = new Paint();
-            paint.setColor(Color.WHITE);
-            paint.setTextSize(/*Util.convertDpToPixel(30, this)*/ (float)(canvas.getDensity()/6));
-            paint.setTextAlign(Paint.Align.CENTER);
-            paint.setTypeface(Typeface.DEFAULT_BOLD);
-
-            int x = canvas.getWidth()/2;
-            int y = canvas.getHeight()/2;
-            if (bearing > 180) {
-                canvas.rotate(90, x, y);
-            } else {
-                canvas.rotate(-90, x, y);
-            }
-
-            x = (canvas.getWidth() / 2);
-            y = (int) (canvas.getHeight()/2 - (paint.descent() + paint.ascent())/2);
-            canvas.drawText(route, x, y, paint);
-
-            int width = (int) Util.convertDpToPixel(20, this);
-            int height = (int) Util.convertDpToPixel(height_dp, this);
-            Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
-
-            Marker marker = map.addMarker(markerOptions);
-            marker.setTag(trip_id);
-            mainMarkers.add(marker);
-
-            resultSet.moveToNext();
+        if (!isVisible) {
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
-        resultSet.close();
-        myDB.close();
 
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
+        final LatLng upperRight = visibleRegion.farRight;
+        final LatLng lowerLeft = visibleRegion.nearLeft;
+
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+
+                double minLat = lowerLeft.latitude;
+                double maxLat = upperRight.latitude;
+                double minLon = lowerLeft.longitude;
+                double maxLon = upperRight.longitude;
+
+                SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+                String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing FROM LocData INNER JOIN Routes " +
+                        "ON LocData.route_id = Routes.route_id WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
+                        " AND longitude BETWEEN " + minLon + " AND " + maxLon;
+                Cursor resultSet = myDB.rawQuery(sql, null);
+
+                resultSet.moveToFirst();
+                for (int i = 0; i < resultSet.getCount(); i++) {
+
+                    double latitude = resultSet.getDouble(0);
+                    double longitude = resultSet.getDouble(1);
+                    String start_time = resultSet.getString(2);
+                    final String trip_id = resultSet.getString(3);
+                    final String route = resultSet.getString(4);
+                    int bearing = resultSet.getInt(5);
+
+                    boolean alreadyExists = false;
+                    //Vector<String> trip_ids_2 = new Vector<>(trip_ids);
+                    for (String trip : trip_ids) {
+                        if (trip.equals(trip_id)) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (alreadyExists) {
+                        resultSet.moveToNext();
+                        continue;
+                    }
+
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    markerOptions.title(Util.beautifyRouteName(route));
+                    markerOptions.rotation(bearing);
+                    markerOptions.position(new LatLng(latitude, longitude));
+
+                    int img_id;
+                    int height_dp;
+                    if (!start_time.equals("")) {
+                        img_id = R.drawable.marker_bus_blue;
+                        height_dp = 40;
+                    } else {
+                        img_id = R.drawable.marker_train_purple;
+                        height_dp = 50;
+                    }
+
+                    BitmapFactory.Options opt = new BitmapFactory.Options();
+                    opt.inMutable = true;
+                    Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), img_id, opt);
+
+                    Canvas canvas = new Canvas(imageBitmap);
+                    Paint paint = new Paint();
+                    paint.setColor(Color.WHITE);
+                    paint.setTextSize(/*Util.convertDpToPixel(30, this)*/ (float) (canvas.getDensity() / 6));
+                    paint.setTextAlign(Paint.Align.CENTER);
+                    paint.setTypeface(Typeface.DEFAULT_BOLD);
+
+                    int x = canvas.getWidth() / 2;
+                    int y = canvas.getHeight() / 2;
+                    if (bearing > 180) {
+                        canvas.rotate(90, x, y);
+                    } else {
+                        canvas.rotate(-90, x, y);
+                    }
+
+                    x = (canvas.getWidth() / 2);
+                    y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
+                    canvas.drawText(route, x, y, paint);
+
+                    int width = (int) Util.convertDpToPixel(20, getApplicationContext());
+                    int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
+                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+
+                    final MarkerOptions markerOptions_f = markerOptions;
+                    AllBusesActivity.this.runOnUiThread(new Runnable() {
+                        public void run() {
+                            Marker marker = map.addMarker(markerOptions_f);
+                            marker.setTag(new Tag(trip_id, route));
+                            mainMarkers.add(marker);
+                            trip_ids.add(trip_id);
+                        }
+                    });
+
+                    resultSet.moveToNext();
+                }
+
+                resultSet.close();
+                myDB.close();
+
+                AllBusesActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                    }
+                });
+            }
+        };
+        thread.start();
     }
 
     @Override
     public void routesReady() {
         areRoutesDone = true;
-        done();
+        done(true);
     }
 
     @Override // Refresh button
     public void onClick(View view) {
+
+        Util.printTiming("Refresh pressed");
+
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         combinedApiBoard.updateData();
         getFerrys.updateData();
@@ -207,10 +265,11 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void onInfoWindowClick(Marker marker) {
 
-        if (marker.getTag() == null) return;
+        Tag tag = (Tag) marker.getTag();
+        if (tag.trip_id == null) return;
 
-        String route = marker.getTitle();
-        String tripID = (String) marker.getTag();
+        String route = tag.route;
+        String tripID = tag.trip_id;
 
         int stopSeq = 100; //todo: replace with null
         long schDate = 400;
@@ -267,5 +326,38 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         }
         resultSet.close();
         myDB.close();
+    }
+
+    @Override
+    public void onCameraIdle() {
+
+        float zoom = map.getCameraPosition().zoom;
+        if (zoom < 12) {
+            if (isVisible) {
+                for (Marker marker : mainMarkers) {
+                    marker.setVisible(false);
+                }
+                isVisible = false;
+            }
+        } else {
+            done(false);
+            if (!isVisible) {
+                for (Marker marker : mainMarkers) {
+                    marker.setVisible(true);
+                }
+                isVisible = true;
+            }
+        }
+    }
+
+    static private class Tag {
+
+        String trip_id;
+        String route;
+
+        Tag (String trip_id, String route) {
+            this.trip_id = trip_id;
+            this.route = route;
+        }
     }
 }

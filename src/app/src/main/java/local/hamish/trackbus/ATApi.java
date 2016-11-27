@@ -3,8 +3,6 @@ package local.hamish.trackbus;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Date;
@@ -19,7 +17,7 @@ class ATApi {
     public static class data {
 
         static String apiRoot() {
-            return ""; //todo: temp (fix from git before 22/11/2016)
+            return "";
             /*
             if (currentApiVersion == API_VERSION.APIv2) {
                 return "https://api.at.govt.nz/v2/";
@@ -34,14 +32,20 @@ class ATApi {
         final static String vehicleLocations = HamishRoot + "vehiclelocations.json";
         final static String tripUpdates = HamishRoot + "tripupdates.json";
         final static String realtime = HamishRoot + "realtime.json";
+        final static String routes = HamishRoot + "routes.json";
+        final static String ferrys = HamishRoot + "ferrys.json";
+
+        //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
+        //final static String routes = ATRoot + "gtfs/routes";
+        //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
+        //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
+        //final static String realtime = ATRoot + "public-restricted/realtime/";
 
         final static String stopInfo = ATRoot + "gtfs/stops/stopinfo/";
         final static String shapeByTripId = ATRoot + "gtfs/shapes/tripId/";
         final static String stops = ATRoot + "gtfs/stops";
         final static String departures = ATRoot + "public-restricted/departures/";
-        final static String routes = ATRoot + "gtfs/routes";
 
-        final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
     }
 
     // Returns string to append to api call
