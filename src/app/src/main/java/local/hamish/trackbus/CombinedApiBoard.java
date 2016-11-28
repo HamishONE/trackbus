@@ -3,6 +3,7 @@ package local.hamish.trackbus;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
@@ -70,12 +71,10 @@ class CombinedApiBoard {
             int occupancy_status = object.getJSONObject("vehicle").optInt("occupancy_status", -1);
 
             if (start_time.equals("")) {
-                latitude = latitude*1.66 + 23.7564;
-                longitude = longitude*1.66 - 114.8370;
 
-                if (latitude < -37.091) {
-                    latitude += 0.6639;
-                }
+                LatLng fixed = Util.fixTrainLocation(latitude, longitude);
+                latitude = fixed.latitude;
+                longitude = fixed.longitude;
             }
 
             /*

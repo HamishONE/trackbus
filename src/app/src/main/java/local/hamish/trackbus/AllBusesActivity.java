@@ -17,7 +17,6 @@ import android.support.design.widget.NavigationView;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
@@ -32,7 +31,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
@@ -48,8 +47,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private boolean areRoutesDone = false;
     private CombinedApiBoard combinedApiBoard;
     private GetFerrys getFerrys;
-    private Vector<Marker> mainMarkers = new Vector<>();
-    private Vector<Marker> ferryMarkers = new Vector<>();
+    private ArrayList<Marker> mainMarkers = new ArrayList<>();
+    private ArrayList<Marker> ferryMarkers = new ArrayList<>();
     private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
     private boolean isVisible = true;
 
@@ -150,6 +149,38 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+
+        boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
+        MenuItem item = menu.findItem(R.id.action_bus);
+        if (showBuses) {
+            item.setIcon(R.drawable.bus_icon_white);
+        } else {
+            item.setIcon(R.drawable.bus_icon_grey);
+        }
+
+        boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
+        item = menu.findItem(R.id.action_train);
+        if (showTrains) {
+            item.setIcon(R.drawable.train_icon_white);
+        } else {
+            item.setIcon(R.drawable.train_icon_grey);
+        }
+
+        boolean showFerrys = settings.getBoolean(SETTING_SHOW_FERRYS, true);
+        item = menu.findItem(R.id.action_ferry);
+        if (showFerrys) {
+            item.setIcon(R.drawable.ferry_icon_white);
+        } else {
+            item.setIcon(R.drawable.ferry_icon_grey);
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
         if (item.getItemId() != R.id.go_all_buses) {
@@ -191,16 +222,17 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
         if (!areRoutesDone) return;
 
-        if (doReplaceMarkers) {
-            for (Marker marker : mainMarkers) {
-                marker.remove();
-            }
-            mainMarkers.clear();
-            trip_ids.clear();
-        }
-
         if (!isVisible) {
             findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+            return;
+        }
+
+        final ArrayList<Marker> tempMarkers;
+        if (doReplaceMarkers) {
+            trip_ids.clear();
+            tempMarkers = new ArrayList<>();
+        } else {
+            tempMarkers = mainMarkers;
         }
 
         VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
@@ -222,6 +254,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         " AND longitude BETWEEN " + minLon + " AND " + maxLon;
                 Cursor resultSet = myDB.rawQuery(sql, null);
 
+                Bitmap busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
+                Bitmap trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
+
                 resultSet.moveToFirst();
                 for (int i = 0; i < resultSet.getCount(); i++) {
 
@@ -237,39 +272,28 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     int bearing = resultSet.getInt(5);
                     final long timestamp = resultSet.getLong(6);
 
-                    boolean alreadyExists = false;
-                    for (String trip : trip_ids) {
-                        if (trip.equals(trip_id)) {
-                            alreadyExists = true;
-                            break;
-                        }
-                    }
-
                     boolean isTrain = start_time.equals("");
-                    if (alreadyExists || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
+                    if (trip_ids.contains(trip_id) || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
                         resultSet.moveToNext();
                         continue;
                     }
 
-                    MarkerOptions markerOptions = new MarkerOptions();
+                    final MarkerOptions markerOptions = new MarkerOptions();
                     markerOptions.title(Util.beautifyRouteName(route));
                     markerOptions.rotation(bearing);
                     markerOptions.position(new LatLng(latitude, longitude));
 
-                    int img_id;
+                    Bitmap vehicleBitmap;
                     int height_dp;
                     if (!isTrain) {
-                        img_id = R.drawable.marker_bus_blue;
+                        vehicleBitmap = busBitmap;
                         height_dp = 40;
                     } else {
-                        img_id = R.drawable.marker_train_purple;
+                        vehicleBitmap = trainBitmap;
                         height_dp = 50;
                     }
 
-                    BitmapFactory.Options opt = new BitmapFactory.Options();
-                    opt.inMutable = true;
-                    Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), img_id, opt);
-
+                    Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
                     Canvas canvas = new Canvas(imageBitmap);
                     Paint paint = new Paint();
                     paint.setColor(Color.WHITE);
@@ -294,12 +318,11 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
                     markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
 
-                    final MarkerOptions markerOptions_f = markerOptions;
                     AllBusesActivity.this.runOnUiThread(new Runnable() {
                         public void run() {
-                            Marker marker = map.addMarker(markerOptions_f);
+                            Marker marker = map.addMarker(markerOptions);
                             marker.setTag(new Tag(trip_id, route, timestamp));
-                            mainMarkers.add(marker);
+                            tempMarkers.add(marker);
                             trip_ids.add(trip_id);
                         }
                     });
@@ -312,6 +335,15 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
                 AllBusesActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
+
+                        if (doReplaceMarkers) {
+                            for (Marker marker : mainMarkers) {
+                                marker.remove();
+                            }
+                            mainMarkers.clear();
+                            mainMarkers = tempMarkers;
+                        }
+
                         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     }
                 });
