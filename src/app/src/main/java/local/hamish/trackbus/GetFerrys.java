@@ -15,7 +15,7 @@ interface FerrysReadyCallback {
 
 class GetFerrys {
 
-    static private JSONArray apiResponse;
+    private JSONArray apiResponse;
     private SQLiteDatabase myDB = null;
     private FerrysReadyCallback callback;
     private Context context;

@@ -11,13 +11,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
-import java.util.Vector;
-
-import static java.util.Calendar.YEAR;
 
 class AdvancedApiBoard {
 
@@ -28,12 +26,11 @@ class AdvancedApiBoard {
     private JSONArray tripData = null;
     boolean active = true;
     private JSONArray stopData = null;
-
-    private Vector<OutputItem> out = new Vector<>();
+    private ArrayList<OutputItem> out = new ArrayList<>();
 
     // Constructor
     AdvancedApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
-                       boolean showTerminating, Vector<OutputItem> out) {
+                       boolean showTerminating, ArrayList<OutputItem> out) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.stopID = stopID;
         this.stopName = stopName;

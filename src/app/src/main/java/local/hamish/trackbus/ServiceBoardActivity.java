@@ -47,9 +47,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.nullwire.trace.ExceptionHandler;
-
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Vector;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -68,7 +67,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public Vector<AdvancedApiBoard.OutputItem> out = new Vector<>();
+    public ArrayList<AdvancedApiBoard.OutputItem> out = new ArrayList<>();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;

@@ -14,13 +14,13 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Vector;
 
 class AllBusesHelper {
 
-    private Vector<AdvancedApiBoard.OutputItem> out;
+    private ArrayList<AdvancedApiBoard.OutputItem> out;
     private GoogleMap map;
     private JSONArray locData;
     Marker[] markers = new Marker[1000];
@@ -29,7 +29,6 @@ class AllBusesHelper {
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
     private FavouritesHelper favouritesHelper;
-
     private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
     // Constructor

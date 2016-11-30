@@ -16,7 +16,7 @@ interface CombinedApiRequest {
 
 class CombinedApiBoard {
 
-    static private JSONArray apiResponse;
+    private JSONArray apiResponse;
     private SQLiteDatabase myDB = null;
     private CombinedApiRequest combinedApiRequest;
     private Context context;
