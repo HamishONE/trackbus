@@ -29,6 +29,8 @@ class ATApi {
         private final static String ATRoot = "https://api.at.govt.nz/v2/";
         private final static String HamishRoot = "http://hamishserver.ddns.net/buffer/";
 
+        final static  String bearings = HamishRoot + "bearings.php";
+
         final static String vehicleLocations = HamishRoot + "vehiclelocations.json";
         final static String tripUpdates = HamishRoot + "tripupdates.json";
         final static String realtime = HamishRoot + "realtime.json";

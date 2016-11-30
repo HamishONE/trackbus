@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -36,17 +37,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener {
+        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback {
 
     private static final String SETTING_SHOW_BUSES = "showBuses";
     private static final String SETTING_SHOW_TRAINS = "showTrains";
     private static final String SETTING_SHOW_FERRYS = "showFerrys";
+
+    private static int refreshRate = 3000; //ms
 
     private GoogleMap map;
     private RecentStops recentStops;
     private boolean areRoutesDone = false;
     private CombinedApiBoard combinedApiBoard;
     private GetFerrys getFerrys;
+    private GetBearings getBearings;
     private ArrayList<Marker> mainMarkers = new ArrayList<>();
     private ArrayList<Marker> ferryMarkers = new ArrayList<>();
     private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
@@ -84,6 +88,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         getRoutes.updateData();
         combinedApiBoard = new CombinedApiBoard(this, this);
         getFerrys = new GetFerrys(this, this);
+        GetBearings.createTable(this);
+        getBearings = new GetBearings(this, this);
         onClick(null);
     }
 
@@ -217,6 +223,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         navigationView.getMenu().findItem(R.id.go_all_buses).setChecked(true);
     }
 
+    volatile boolean isLocked = false;
+
     @Override
     public void done(final boolean doReplaceMarkers) {
 
@@ -243,14 +251,20 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             @Override
             public void run() {
 
+                while (isLocked) {};
+                isLocked = true;
+
                 double minLat = lowerLeft.latitude;
                 double maxLat = upperRight.latitude;
                 double minLon = lowerLeft.longitude;
                 double maxLon = upperRight.longitude;
 
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-                String sql = "SELECT latitude, longitude, start_time, trip_id, route_short_name, bearing, timestamp FROM LocData " +
-                        "INNER JOIN Routes ON LocData.route_id = Routes.route_id WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
+                String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name, Bearings.bearing, timestamp " +
+                        "FROM LocData " +
+                        "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
+                        "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
+                        "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
                         " AND longitude BETWEEN " + minLon + " AND " + maxLon;
                 Cursor resultSet = myDB.rawQuery(sql, null);
 
@@ -342,11 +356,24 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                             }
                             mainMarkers.clear();
                             mainMarkers = tempMarkers;
+
+                            /*
+                            //todo: make glob null?
+                            Handler handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                public void run() {
+                                    int hi = 30;
+                                    onClick(null);
+                                }
+                            }, refreshRate);
+                            */
                         }
 
                         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     }
                 });
+
+                isLocked = false;
             }
         };
         thread.start();
@@ -365,6 +392,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         if (settings.getBoolean(SETTING_SHOW_BUSES, true) || settings.getBoolean(SETTING_SHOW_TRAINS, true)) {
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE); //todo: should be one for ferrys too
             combinedApiBoard.updateData();
+            getBearings.updateData();
         }
         if (settings.getBoolean(SETTING_SHOW_FERRYS, true)) {
             getFerrys.updateData();
@@ -470,6 +498,11 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             marker.setSnippet(diff + "s ago");
         }
         return false; //so that default behaviour occurs
+    }
+
+    @Override
+    public void bearingsReady() {
+        //do nothing
     }
 
     static private class Tag {
