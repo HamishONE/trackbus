@@ -1,0 +1,9 @@
+<?php
+
+$host = "<MySQL hostname or ip address>";
+$port = <MySQL port>;
+$database = "<MySQL databse>";
+$user = "<MySQL user with priveleges over database>";
+$password = "<matching password>";
+
+?>
