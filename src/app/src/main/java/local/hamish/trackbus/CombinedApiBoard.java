@@ -141,7 +141,7 @@ class CombinedApiBoard {
 
     private void getData() {
 
-        final String urlString = ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization();
+        final String urlString = ATApi.getUrl(ATApi.API.realtime);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

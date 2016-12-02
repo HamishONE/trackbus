@@ -66,7 +66,7 @@ class GetRoutes {
     }
 
     private void getData() {
-        final String urlString = ATApi.data.apiRoot() + ATApi.data.routes + ATApi.getAuthorization();
+        final String urlString = ATApi.getUrl(ATApi.API.routes);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

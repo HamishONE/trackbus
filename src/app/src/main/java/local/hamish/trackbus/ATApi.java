@@ -14,41 +14,57 @@ class ATApi {
     private static int drift = 0;
     static int errorCount = 0;
 
-    public static class data {
-
-        static String apiRoot() {
-            return "";
-            /*
-            if (currentApiVersion == API_VERSION.APIv2) {
-                return "https://api.at.govt.nz/v2/";
-            } else  {
-                return "https://api.at.govt.nz/v1/";
-            }*/
-        }
-
-        private final static String ATRoot = "https://api.at.govt.nz/v2/";
-        private final static String HamishRoot = "http://hamishserver.ddns.net/buffer/";
-
-        final static  String bearings = HamishRoot + "bearings.php";
-
-        final static String vehicleLocations = HamishRoot + "vehiclelocations.json";
-        final static String tripUpdates = HamishRoot + "tripupdates.json";
-        final static String realtime = HamishRoot + "realtime.json";
-        final static String routes = HamishRoot + "routes.json";
-        final static String ferrys = HamishRoot + "ferrys.json";
-
-        //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
-        //final static String routes = ATRoot + "gtfs/routes";
-        //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
-        //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
-        //final static String realtime = ATRoot + "public-restricted/realtime/";
-
-        final static String stopInfo = ATRoot + "gtfs/stops/stopinfo/";
-        final static String shapeByTripId = ATRoot + "gtfs/shapes/tripId/";
-        final static String stops = ATRoot + "gtfs/stops";
-        final static String departures = ATRoot + "public-restricted/departures/";
-
+    enum API {
+        vehiclelocations,
+        tripupdates,
+        realtime,
+        routes,
+        ferrys,
+        stopInfo,
+        shapeByTripId,
+        stops,
+        departures,
+        bearings
     }
+
+    private final static String ATRoot = "https://api.at.govt.nz/v2/";
+    private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
+
+    static String getUrl(API api) {
+        switch (api) {
+            // Special
+            case bearings:
+                return "http://hamishserver.ddns.net/buffer/bearings.php";
+            // Server buffer
+            case vehiclelocations:
+                return HamishRoot + "vehiclelocations";
+            case tripupdates:
+                return HamishRoot + "tripupdates";
+            case realtime:
+                return HamishRoot + "realtime";
+            case routes:
+                return HamishRoot + "routes";
+            case ferrys:
+                return HamishRoot + "ferrys";
+            // AT direct
+            case stopInfo:
+                return ATRoot + "gtfs/stops/stopinfo/" + getAuthorization();
+            case shapeByTripId:
+                return ATRoot + "gtfs/shapes/tripId/" /*+ getAuthorization()*/;
+            case stops:
+                return ATRoot + "gtfs/stops" + getAuthorization();
+            case departures:
+                return ATRoot + "public-restricted/departures/" + getAuthorization();
+        }
+        return null;
+    }
+
+    //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
+    //final static String routes = ATRoot + "gtfs/routes";
+    //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
+    //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
+    //final static String realtime = ATRoot + "public-restricted/realtime/";
+
 
     // Returns string to append to api call
     static String getAuthorization() {
@@ -79,7 +95,7 @@ class ATApi {
         if (currentApiVersion == API_VERSION.APIv2) return;
 
         final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
-        getData(ATApi.data.apiRoot() + "time/epoch?api_key=" + epochKey);
+        getData("https://api.at.govt.nz/v1/time/epoch?api_key=" + epochKey);
     }
 
     // Finishes getting the drift

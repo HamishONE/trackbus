@@ -71,7 +71,7 @@ class GetBearings {
     }
 
     private void getData() {
-        final String urlString = ATApi.data.apiRoot() + ATApi.data.bearings;
+        final String urlString = ATApi.getUrl(ATApi.API.bearings);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

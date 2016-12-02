@@ -223,8 +223,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         navigationView.getMenu().findItem(R.id.go_all_buses).setChecked(true);
     }
 
-    volatile boolean isLocked = false;
-
     @Override
     public void done(final boolean doReplaceMarkers) {
 
@@ -237,7 +235,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
         final ArrayList<Marker> tempMarkers;
         if (doReplaceMarkers) {
-            trip_ids.clear();
+            trip_ids.clear(); //todo: use temp trip_id list
             tempMarkers = new ArrayList<>();
         } else {
             tempMarkers = mainMarkers;
@@ -250,9 +248,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         Thread thread = new Thread() {
             @Override
             public void run() {
-
-                while (isLocked) {};
-                isLocked = true;
 
                 double minLat = lowerLeft.latitude;
                 double maxLat = upperRight.latitude;
@@ -287,7 +282,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     final long timestamp = resultSet.getLong(6);
 
                     boolean isTrain = start_time.equals("");
-                    if (trip_ids.contains(trip_id) || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
+                    if (!doReplaceMarkers && (trip_ids.contains(trip_id) || (isTrain && !showTrains) || (!isTrain && !showBuses))) {
                         resultSet.moveToNext();
                         continue;
                     }
@@ -372,8 +367,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     }
                 });
-
-                isLocked = false;
             }
         };
         thread.start();

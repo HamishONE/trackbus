@@ -38,7 +38,7 @@ class TraditionalApiBoard {
 
     // Call API
     void callAPI() {
-        getBoardData(ATApi.data.apiRoot() + ATApi.data.departures + stopID + ATApi.getAuthorization());
+        getBoardData(ATApi.getUrl(ATApi.API.departures));
     }
 
     // Continues with code after network responds

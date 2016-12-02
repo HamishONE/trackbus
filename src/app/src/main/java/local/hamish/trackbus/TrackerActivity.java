@@ -240,8 +240,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.data.apiRoot() + ATApi.data.shapeByTripId + tripID + ATApi.getAuthorization());
-        getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId) + tripID + ATApi.getAuthorization());
+        getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
     }
 
     private void updateTimestamp() {
@@ -395,7 +395,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
             }
         }, timeDelay);
     }
@@ -464,7 +464,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                     main();
                 } catch (JSONException e) {
                     e.printStackTrace(); //todo: what are we doing?
-                    getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                    //getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
                     //handleError(-5);
                 }
             }
@@ -502,7 +502,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
             }
         });
        snackbar.show();

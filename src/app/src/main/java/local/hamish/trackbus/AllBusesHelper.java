@@ -49,7 +49,7 @@ class AllBusesHelper {
             allTrips += out.get(i).trip + ",";
         }
         Log.e("Num requested: ", String.valueOf(out.size()));
-        getData(ATApi.data.apiRoot() + ATApi.data.vehicleLocations + ATApi.getAuthorization() + allTrips);
+        getData(ATApi.getUrl(ATApi.API.vehiclelocations) + allTrips);
     }
 
     // Calls the API
