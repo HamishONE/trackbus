@@ -9,7 +9,7 @@ if not os.path.isfile("./preferences.py"):
 	print("You will need the connection details for a MySQL server with the tables created.")
 	quit()
 import preferences
-host,port,port,database,user,password,timeout,refresh_freq = preferences.preferences()
+host,port,port,database,user,password,timeout_num,refresh_freq = preferences.preferences()
 
 # AT Apis
 apiRoot = 'https://api.at.govt.nz/v2/'
@@ -20,6 +20,7 @@ vehiclelocations = 'public/realtime/vehiclelocations/'
 routes = 'gtfs/routes/'
 ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol"
 
+# Imports
 import time
 import urllib.request
 import json
@@ -28,10 +29,8 @@ import pymysql.cursors
 import datetime
 import sys
 import urllib.error
-from socket import error as SocketError
 import socket
-#from socket import timeout
-from threading import Thread
+import threading
 
 def addToDb(key, url, conn):
 
@@ -42,17 +41,12 @@ def addToDb(key, url, conn):
 		print(key + ": URL ERROR: " + str(e.code))
 		sys.stdout.flush()
 		return None
-	except SocketError:
-		print(key + ": SOCKET ERROR")
+	except socket.error as e:
+		print(key + ": SOCKET ERROR: " + str(e))
 		sys.stdout.flush()
 		return None
-	#except timeout:
-		#print(key + ': SOCKET TIMED OUT')
-		#sys.stdout.flush()
-		#return None
 	except Exception as e:
-		print(key + ": GENERIC EXCEPTION")
-		print(traceback.format_exception(*sys.exc_info()))
+		print(key + ": GENERIC EXCEPTION: " + str(e))
 		sys.stdout.flush()
 		return None
 	
@@ -131,15 +125,15 @@ print("\n" + "*"*50)
 print("START OF BUFFER APP @ " + str(datetime.datetime.now()))
 print("*"*50 + "\n")
 print("Calling the apis every %dsecs (maximum)"%refresh_freq)
-print("Requests will time out after %dsecs\n"%timeout)
+print("Requests will time out after %dsecs\n"%timeout_num)
 sys.stdout.flush()
 	
 # Set timeout
-socket.setdefaulttimeout(timeout)
+socket.setdefaulttimeout(timeout_num)
 	
 # Start a thread for each API
-Thread(target=updateApi, args=['tripupdates', apiRoot + tripupdates + apiKey]).start()
-Thread(target=updateApi, args=['routes', apiRoot + routes + apiKey]).start()
-Thread(target=updateApi, args=['ferrys', ferrys]).start()
-Thread(target=updateApi, args=['realtime', apiRoot + realtime + apiKey]).start()
-Thread(target=updateApi, args=['vehiclelocations', apiRoot + vehiclelocations + apiKey]).start()
+threading.Thread(target=updateApi, args=['tripupdates', apiRoot + tripupdates + apiKey]).start()
+threading.Thread(target=updateApi, args=['routes', apiRoot + routes + apiKey]).start()
+threading.Thread(target=updateApi, args=['ferrys', ferrys]).start()
+threading.Thread(target=updateApi, args=['realtime', apiRoot + realtime + apiKey]).start()
+threading.Thread(target=updateApi, args=['vehiclelocations', apiRoot + vehiclelocations + apiKey]).start()
