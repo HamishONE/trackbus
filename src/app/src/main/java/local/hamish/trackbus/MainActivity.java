@@ -309,7 +309,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             dialog = ProgressDialog.show(this, arg1, "Please wait", true);
 
             myDB.execSQL("DELETE FROM Stops;");
-            getStops(ATApi.getUrl(ATApi.API.stops));
+            getStops(ATApi.getUrl(ATApi.API.stops, null));
         }
 
         myDB.close();

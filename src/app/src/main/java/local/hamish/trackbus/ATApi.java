@@ -30,7 +30,7 @@ class ATApi {
     private final static String ATRoot = "https://api.at.govt.nz/v2/";
     private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
 
-    static String getUrl(API api) {
+    static String getUrl(API api, String param) {
         switch (api) {
             // Special
             case bearings:
@@ -48,13 +48,16 @@ class ATApi {
                 return HamishRoot + "ferrys";
             // AT direct
             case stopInfo:
-                return ATRoot + "gtfs/stops/stopinfo/" + getAuthorization();
+                if (param == null) return null;
+                return ATRoot + "gtfs/stops/stopinfo/" + param + getAuthorization();
             case shapeByTripId:
-                return ATRoot + "gtfs/shapes/tripId/" /*+ getAuthorization()*/;
+                if (param == null) return null;
+                return ATRoot + "gtfs/shapes/tripId/" + param + getAuthorization();
             case stops:
                 return ATRoot + "gtfs/stops" + getAuthorization();
             case departures:
-                return ATRoot + "public-restricted/departures/" + getAuthorization();
+                if (param == null) return null;
+                return ATRoot + "public-restricted/departures/" + param + getAuthorization();
         }
         return null;
     }

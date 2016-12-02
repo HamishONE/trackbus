@@ -65,7 +65,7 @@ class GetFerrys {
     }
 
     private void getData() {
-        final String urlString = ATApi.getUrl(ATApi.API.ferrys);
+        final String urlString = ATApi.getUrl(ATApi.API.ferrys, null);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

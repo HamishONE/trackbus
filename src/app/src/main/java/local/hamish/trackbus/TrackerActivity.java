@@ -240,8 +240,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId) + tripID + ATApi.getAuthorization());
-        getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
+        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId, tripID));
+        getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
     }
 
     private void updateTimestamp() {
@@ -395,7 +395,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
             }
         }, timeDelay);
     }
@@ -502,7 +502,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
             }
         });
        snackbar.show();
