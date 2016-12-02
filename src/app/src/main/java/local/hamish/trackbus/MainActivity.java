@@ -322,7 +322,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void run() {
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
 
-                String values = "";
+                StringBuilder values = new StringBuilder(400000);
                 for (int i = 0; i < response.response.size(); i++) {
                     try {
                         Stop stop = response.response.get(i);
@@ -332,9 +332,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                             int end = stop.stop_id.indexOf("_");
                             stop.stop_id = stop.stop_id.substring(0, end);
                         }
-                        values += "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
+
+                        String values_temp = "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
                                 stop.stop_name.replace("'", "''") + "')";
-                        if (i != response.response.size()-1) values += ",";
+                        if (i != response.response.size()-1) values_temp += ",";
+                        values.append(values_temp);
 
                         final int num = i;
                         MainActivity.this.runOnUiThread(new Runnable() {
