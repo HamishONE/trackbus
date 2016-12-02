@@ -282,7 +282,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     final long timestamp = resultSet.getLong(6);
 
                     boolean isTrain = start_time.equals("");
-                    if (!doReplaceMarkers && (trip_ids.contains(trip_id) || (isTrain && !showTrains) || (!isTrain && !showBuses))) {
+                    if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
                         resultSet.moveToNext();
                         continue;
                     }
@@ -291,6 +291,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     markerOptions.title(Util.beautifyRouteName(route));
                     markerOptions.rotation(bearing);
                     markerOptions.position(new LatLng(latitude, longitude));
+                    markerOptions.anchor(0.5F, 0.5F);
 
                     Bitmap vehicleBitmap;
                     int height_dp;
