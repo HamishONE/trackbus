@@ -402,15 +402,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         String route = tag.route;
         String tripID = tag.trip_id;
 
-        int stopSeq = 100; //todo: replace with null
-        long schDate = 400;
-
         Intent intent = new Intent(this, TrackerActivity.class);
         intent.putExtra(EXTRA_TRIP_ID, tripID);
-        intent.putExtra(EXTRA_STOP_SEQ, stopSeq);
         intent.putExtra(EXTRA_ROUTE, route);
-        intent.putExtra(EXTRA_STOP, (String) null);
-        intent.putExtra(EXTRA_SCH_DATE, schDate);
         startActivity(intent);
     }
 

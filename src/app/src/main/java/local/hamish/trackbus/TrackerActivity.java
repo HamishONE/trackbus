@@ -300,8 +300,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             long2 = position.getDouble("longitude");
             if (position.has("bearing")) bearingNew = position.getDouble("bearing");
 
-            if (stopDict == null) {
-                stopsAway = 100; //todo: change
+            if (stopDict == null /*|| stopSeq == -1*/) {
+                stopsAway = -1;
             } else {
                 stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_sequence");
             }
@@ -325,9 +325,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                     f.printStackTrace();
                 }
             }
-        } else {
+        } /*else {
             delay = 0; //todo: change
-        }
+        }*/
 
         String notiText = "";
 
@@ -354,23 +354,33 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         }
 
         // Set due time header
-        long dueSec = schTime + delay - new Date().getTime()/1000;
-        if (dueSec < 60) {
-            tvDue.setText("Due: *");
-            notiText += "Due: *" + "\n";
+        String dueStr;
+        if (schTime == -1 || stopDict == null) {
+            dueStr = "-";
         } else {
-            tvDue.setText("Due: " + String.valueOf(dueSec/60) + "'");
-            notiText += "Due: " + String.valueOf(dueSec/60) + "'" + "\n";
+            long dueSec = schTime + delay - new Date().getTime() / 1000;
+            if (dueSec < 60) {
+                dueStr = "*";
+            } else {
+                dueStr = String.valueOf(dueSec / 60) + "'";
+            }
         }
+        tvDue.setText("Due: " + dueStr);
+        notiText += "Due: " + dueStr + "\n";
 
         // Set stops away and stop thread if bus departed
-        if (stopsAway < 1) {
-            tvStops.setText("Stops: *");
-            notiText += "Stops: *";
-            if (stopsAway < 0) return;
+        if (stopSeq == -1 || stopDict == null) {
+            tvStops.setText("Stops: -");
+            notiText += "Stops: n/a";
         } else {
-            tvStops.setText(String.format(Locale.US ,"Stops: %d", stopsAway));
-            notiText += "Stops: " + Integer.toString(stopsAway);
+            if (stopsAway < 1) {
+                tvStops.setText("Stops: *");
+                notiText += "Stops: *";
+                if (stopsAway < 0) return;
+            } else {
+                tvStops.setText(String.format(Locale.US, "Stops: %d", stopsAway));
+                notiText += "Stops: " + Integer.toString(stopsAway);
+            }
         }
 
         //if (showNotification) showNotification(notiText);
