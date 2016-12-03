@@ -51,6 +51,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             bindPreferenceSummaryToValue(findPreference("server_list"));
             bindPreferenceSummaryToValue(findPreference("interval_list"));
+            bindPreferenceSummaryToValue(findPreference("start_page"));
         }
     }
 

@@ -34,6 +34,17 @@
     <!--Settings-->
     <string name="settings_label">Settings</string>
 
+    <string-array name="start_page_list">
+        <item>Find a stop</item>
+        <item>All vehicles</item>
+        <item>Favourite Stops</item>
+    </string-array>
+    <string-array name="start_page_list_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
     <string-array name="server_list">
         <item>192.168.1.5</item>
         <item>hamishserver.ddns.net</item>
