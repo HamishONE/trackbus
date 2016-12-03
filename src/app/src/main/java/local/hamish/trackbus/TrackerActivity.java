@@ -247,10 +247,15 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     private void updateTimestamp() {
 
         int secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
-        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
+        String timestamp;
+        if (secsAgo < 100) {
+            timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
+        } else {
+            timestamp = String.format(Locale.US, "%2d' ago", secsAgo/60);
+        }
         tvTimestamp.setText(timestamp);
 
-        timer.start();
+        if (timer != null) timer.start();
     }
 
     // Calls the API regularly and redraws map
@@ -308,8 +313,6 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             }
 
             lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
-            secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
-
             isTrain = !locDict.getJSONObject("vehicle").getJSONObject("trip").has("start_time");
 
         } catch (JSONException e) {e.printStackTrace();}
@@ -333,9 +336,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         String notiText = "";
 
         // Set timestamp header
-        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
-        tvTimestamp.setText(timestamp);
-        notiText += timestamp + "\n";
+        updateTimestamp();
+        //notiText += timestamp + "\n";
 
         if (timer == null) {
             timer = new CountDownTimer(1000, 20) {
