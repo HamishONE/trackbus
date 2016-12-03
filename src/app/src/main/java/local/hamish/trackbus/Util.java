@@ -13,6 +13,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.text.ParseException;
@@ -117,15 +118,23 @@ final class Util {
     }
 
     // Sets up the map the way we like it
-    static void setupMap (Context context ,GoogleMap map) {
+    static void setupMap (Context context, GoogleMap map) {
+
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
         }
+
         map.getUiSettings().setRotateGesturesEnabled(false);
         map.getUiSettings().setMapToolbarEnabled(false);
         map.getUiSettings().setTiltGesturesEnabled(false);
         map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.style_json));
+
+        LatLng northeast = new LatLng(-36.003522, 175.437063);
+        LatLng southwest = new LatLng(-37.703045, 174.273933);
+        LatLngBounds Akl = new LatLngBounds(southwest, northeast);
+        map.setLatLngBoundsForCameraTarget(Akl);
+        map.setMinZoomPreference(8F);
     }
 
     static boolean checkPlayServices(Activity context) {
