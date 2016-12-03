@@ -260,6 +260,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
         // Remove loading bar
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        findViewById(R.id.loadingPanelSmall).setVisibility(View.INVISIBLE);
 
         double lat2 = 0.0;
         double long2 = 0.0;
@@ -405,6 +406,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
+                findViewById(R.id.loadingPanelSmall).setVisibility(View.VISIBLE);
                 getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
             }
         }, timeDelay);
