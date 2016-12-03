@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback {
+        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback, GoogleMap.OnInfoWindowCloseListener {
 
     private static final String SETTING_SHOW_BUSES = "showBuses";
     private static final String SETTING_SHOW_TRAINS = "showTrains";
@@ -55,6 +55,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private ArrayList<Marker> ferryMarkers = new ArrayList<>();
     private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
     private boolean isVisible = true;
+    private String selectedTrip = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,6 +208,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         map.setOnInfoWindowClickListener(this);
         map.setOnCameraIdleListener(this);
         map.setOnMarkerClickListener(this);
+        map.setOnInfoWindowCloseListener(this);
     }
 
     @Override
@@ -335,6 +337,11 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                             marker.setTag(new Tag(trip_id, route, timestamp));
                             tempMarkers.add(marker);
                             trip_ids.add(trip_id);
+
+                            if (trip_id.equals(selectedTrip)) {
+                                onMarkerClick(marker);
+                                marker.showInfoWindow();
+                            }
                         }
                     });
 
@@ -470,17 +477,22 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+
         Tag tag = (Tag) marker.getTag();
-        if (tag != null) {
-            long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
-            marker.setSnippet(diff + "s ago");
-        }
+        selectedTrip = tag.trip_id;
+        long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+        marker.setSnippet(diff + "s ago");
         return false; //so that default behaviour occurs
     }
 
     @Override
     public void bearingsReady() {
         //do nothing
+    }
+
+    @Override
+    public void onInfoWindowClose(Marker marker) {
+        selectedTrip = null;
     }
 
     static private class Tag {
