@@ -1,5 +1,7 @@
 <?php
 
+header('Content-Type: application/json');
+
 include "preferences.php";
 $mysqli = new mysqli("p:$host", $user, $password, $database, $port);
 if ($mysqli->connect_errno) {
