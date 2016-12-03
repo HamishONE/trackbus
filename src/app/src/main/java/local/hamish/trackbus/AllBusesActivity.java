@@ -11,7 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -56,6 +56,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
     private boolean isVisible = true;
     private String selectedTrip = null;
+    private CountDownTimer timer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -476,12 +477,34 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
+    public boolean onMarkerClick(final Marker marker) {
 
-        Tag tag = (Tag) marker.getTag();
+        final Tag tag = (Tag) marker.getTag();
+        if (tag == null) return false;
+
         selectedTrip = tag.trip_id;
         long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
         marker.setSnippet(diff + "s ago");
+
+        if (timer != null) timer.cancel();
+        timer = new CountDownTimer(1000, 20) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+
+            @Override
+            public void onFinish() {
+                if (!marker.isInfoWindowShown()) {
+                    timer = null;
+                    return;
+                }
+                long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+                marker.setSnippet(diff + "s ago");
+                marker.showInfoWindow();
+                timer.start();
+            }
+        }.start();
+
         return false; //so that default behaviour occurs
     }
 
