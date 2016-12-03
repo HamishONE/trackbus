@@ -63,7 +63,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private boolean active = true;
 
     // Helper objects
-    private FavouritesHelper favouritesHelper;
     private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
@@ -139,8 +138,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         SharedPreferences settings = getPreferences(MODE_PRIVATE);
         showTerminating = settings.getBoolean("showTerminating", false);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
-
-        favouritesHelper = new FavouritesHelper(this);
 
         //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
         newApiBoard = new AdvancedApiBoard(this, stopID, stopName, showTerminating, out);
@@ -320,7 +317,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
                 String route = out.get(pos).route;
-                favouritesHelper.changeFavRoute(route);
+                Util.changeFavRoute(getApplicationContext(), route);
+                produceView();
+                produceViewOld();
                 return true;
             }
         });
@@ -366,7 +365,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
                 String route = oldApiBoard.items[pos].route;
-                favouritesHelper.changeFavRoute(route);
+                Util.changeFavRoute(getApplicationContext(), route);
+                produceView();
+                produceViewOld();
                 return true;
             }
         });
@@ -479,12 +480,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
             String routeName = oldApiBoard.items[position].route;
-            SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-            myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
-            Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
-            if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
-            resultSet.close();
-            myDB.close();
+            if (Util.isFavouriteRoute(getApplicationContext(), routeName)) {
+                imageView.setImageResource(R.drawable.heart_icon_pink);
+            }
 
             return rowView;
         }
@@ -533,12 +531,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
             String routeName = out.get(position).route;
-            SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-            myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
-            Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
-            if (resultSet.getCount() > 0) imageView.setImageResource(R.drawable.heart_icon_pink);
-            resultSet.close();
-            myDB.close();
+            if (Util.isFavouriteRoute(getApplicationContext(), routeName)) {
+                imageView.setImageResource(R.drawable.heart_icon_pink);
+            }
 
             return rowView;
         }

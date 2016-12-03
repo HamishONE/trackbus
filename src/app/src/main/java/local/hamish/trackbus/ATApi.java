@@ -5,7 +5,9 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 class ATApi {
 
@@ -68,9 +70,32 @@ class ATApi {
     //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
     //final static String realtime = ATRoot + "public-restricted/realtime/";
 
+    static boolean isDoubleDecker(String vehicle) {
+
+        // List from: github.com/consindo/dymajo-transit/blob/master/server/realtime.js
+        List<String> doubleDeckers = Arrays.asList(
+
+            // NZ Bus (ADL Enviro500)
+            "3A99", "3A9A", "3A9B", "3A9C", "3A9D", "3A9E", "3A9F",
+            "3AA0", "3AA1", "3AA2", "3AA3", "3AA4", "3AA5", "3AA6",
+            "3AA7", "3AA8", "3AA9", "3AAA", "3AAB", "3AAC", "3AAD",
+            "3AAE", "3AAF",
+
+            // Howick and Eastern (ADL Enviro500)
+            "5FB4", "5FB5", "5FB6", "5FB7", "5FB8", "5FB9", "5FBA",
+            "5FBB", "5FBC", "5FBD", "5FBE", "5FBF", "5FC0", "5FC1",
+            "5FC2",
+
+            // Ritchies/NEX (BCI CityRider FBC6123BRZ)
+            "5622", "5623", "5624", "5625", "5626", "5627", "5628",
+            "5629", "562A", "562B", "562C", "562D", "562E", "562F",
+            "5630"
+        );
+        return doubleDeckers.contains(vehicle);
+    }
 
     // Returns string to append to api call
-    static String getAuthorization() {
+    private static String getAuthorization() {
 
         if (currentApiVersion == API_VERSION.APIv2) {
 

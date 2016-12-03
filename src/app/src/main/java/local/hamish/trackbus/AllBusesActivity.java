@@ -37,7 +37,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback, GoogleMap.OnInfoWindowCloseListener {
+        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback, GoogleMap.OnInfoWindowCloseListener,
+        GoogleMap.OnInfoWindowLongClickListener {
 
     private static final String SETTING_SHOW_BUSES = "showBuses";
     private static final String SETTING_SHOW_TRAINS = "showTrains";
@@ -210,6 +211,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         map.setOnCameraIdleListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnInfoWindowCloseListener(this);
+        map.setOnInfoWindowLongClickListener(this);
     }
 
     @Override
@@ -259,8 +261,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                 double maxLon = upperRight.longitude;
 
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-                String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name, Bearings.bearing, timestamp " +
-                        "FROM LocData " +
+                String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
+                        " Bearings.bearing, timestamp, vehicle_id FROM LocData " +
                         "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
                         "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
                         "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
@@ -269,6 +271,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
                 Bitmap busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
                 Bitmap trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
+                Bitmap ddBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_brown);
+                Bitmap favBusBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_red);
 
                 resultSet.moveToFirst();
                 for (int i = 0; i < resultSet.getCount(); i++) {
@@ -284,6 +288,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     final String route = resultSet.getString(4);
                     int bearing = resultSet.getInt(5);
                     final long timestamp = resultSet.getLong(6);
+                    final String vehicle_id = resultSet.getString(7);
 
                     boolean isTrain = start_time.equals("");
                     if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && (!showBuses || !isVisible))) {
@@ -299,12 +304,18 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
                     Bitmap vehicleBitmap;
                     int height_dp;
-                    if (!isTrain) {
-                        vehicleBitmap = busBitmap;
-                        height_dp = 40;
-                    } else {
+                    if (isTrain) {
                         vehicleBitmap = trainBitmap;
                         height_dp = 50;
+                    } else if (Util.isFavouriteRoute(getApplicationContext(), route))  {
+                        vehicleBitmap = favBusBitmap;
+                        height_dp = 40;
+                    } else if (ATApi.isDoubleDecker(vehicle_id))  {
+                        vehicleBitmap = ddBitmap;
+                        height_dp = 40;
+                    } else {
+                        vehicleBitmap = busBitmap;
+                        height_dp = 40;
                     }
 
                     Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
@@ -517,6 +528,14 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void onInfoWindowClose(Marker marker) {
         selectedTrip = null;
+    }
+
+    @Override
+    public void onInfoWindowLongClick(Marker marker) {
+
+        Tag tag = (Tag) marker.getTag();
+        Util.changeFavRoute(this, tag.route);
+        done(true);
     }
 
     static private class Tag {

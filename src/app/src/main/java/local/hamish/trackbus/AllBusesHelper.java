@@ -28,7 +28,6 @@ class AllBusesHelper {
     private boolean firstCall = true;
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
-    private FavouritesHelper favouritesHelper;
     private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
     // Constructor
@@ -36,8 +35,6 @@ class AllBusesHelper {
         this.serviceBoardActivity = serviceBoardActivity;
         this.map = map;
         this.circle = circle;
-        favouritesHelper = new FavouritesHelper(serviceBoardActivity);
-
         this.out = serviceBoardActivity.out;
     }
 
@@ -115,7 +112,7 @@ class AllBusesHelper {
                         }
 
                         Marker marker;
-                        if (favouritesHelper.isFavRoute(out.get(i).route)) {
+                        if (Util.isFavouriteRoute(serviceBoardActivity, out.get(i).route)) {
                             marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.get(i).route)
                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.heart_icon_pink)));
