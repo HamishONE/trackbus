@@ -11,7 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 interface CombinedApiRequest {
-    void done(boolean doReplaceMarkers);
+    void done();
 }
 
 class CombinedApiBoard {
@@ -136,7 +136,7 @@ class CombinedApiBoard {
         myDB.endTransaction();
         myDB.close();
 
-        combinedApiRequest.done(true);
+        combinedApiRequest.done();
     }
 
     private void getData() {
