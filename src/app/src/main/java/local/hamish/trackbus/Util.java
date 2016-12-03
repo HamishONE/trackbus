@@ -13,6 +13,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -123,6 +125,7 @@ final class Util {
         map.getUiSettings().setRotateGesturesEnabled(false);
         map.getUiSettings().setMapToolbarEnabled(false);
         map.getUiSettings().setTiltGesturesEnabled(false);
+        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.style_json));
     }
 
     static boolean checkPlayServices(Activity context) {
