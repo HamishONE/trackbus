@@ -2,32 +2,33 @@
 
     <!-- Other -->
     <string name="app_name">Akl PT Tracker</string>
-    <string name="google_app_id" translatable="false">1084282840745</string>
 
     <!-- Home screen -->
-    <string name="stop_entry_hint">Enter Stop</string>
-    <string name="stop_button_send">Go</string>
     <string name="refresh_stops">Refresh stops list</string>
 
     <!-- Service Board -->
-    <string name="title_activity_service_board">Loading</string>
-    <string name="service_board_header">"Route     Scheduled     Stops    Due"</string>
     <string name="board_show_terminating">Show terminating services</string>
     <string name="board_change_favourite">Add Favourite</string>
     <string name="board_change_source">Use maxx.co.nz</string>
+    <string name="message_negative_stops_away">DEPARTING</string>
+    <string name="train_platform_label">Plat.</string>
+    <string name="ferry_pier_label">Pier</string>
+    <string name="route_number_heading">Route</string>
+    <string name="scheduled_time_heading">Scheduled</string>
+    <string name="secs_away_heading">Due</string>
+    <string name="stops_away_heading">Stops</string>
 
     <!-- Tracker -->
-    <string name="title_activity_tracker" translatable="false">""</string>
-    <string name="tracker_info_line" translatable="false">""</string>
+    <string name="stops_away_label">Stops:</string>
+    <string name="secs_away_label">Due:</string>
 
     <!-- Favourites -->
     <string name="title_activity_favourites">My Favourites</string>
-    <string name="favourites_header">"Stop    Name"</string>
     <string name="clear_favourites">Clear Favourites</string>
-    <string name="title_activity_test">TestActivity</string>
 
     <!-- Hamburger menu -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="title_activity_all_buses">All Vehicles</string>
 
 </resources>

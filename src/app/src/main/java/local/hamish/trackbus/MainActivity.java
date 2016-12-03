@@ -7,9 +7,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -24,7 +21,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.google.android.gms.maps.CameraUpdateFactory;
+import com.bluelinelabs.logansquare.LoganSquare;
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
+import com.bluelinelabs.logansquare.annotation.OnJsonParseComplete;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,21 +35,22 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.nullwire.trace.ExceptionHandler;
+import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
-    static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+    private static final float INITIAL_ZOOM = 17;
 
     private String[][] stops = new String[10000][4];
     private GoogleMap map = null;
     private Marker[] stopMarkers = new Marker[10000];
     private int len = 0;
     private boolean isVisible = true;
-    private JSONArray stopListData;
+    private Response response;
     private ProgressDialog dialog;
     private RecentStops recentStops;
 
@@ -57,6 +58,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -90,12 +93,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         // Check if location permission has not yet been granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Check if permission has been requested before
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Request the permission.
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
+            // Request the permission.
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
         ATApi.getDrift();
@@ -108,7 +108,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         map.setOnCameraIdleListener(getCameraChangeListener());
 
         loadStops(false);
-        zoomToLoc();
+        zoomToLoc(map, INITIAL_ZOOM);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         e.printStackTrace();
                     }
                 }
-                zoomToLoc();
+                zoomToLoc(map, INITIAL_ZOOM);
                 break;
             }
         }
@@ -141,8 +141,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
         myDB.close();
-        navigationView.getMenu().getItem(0).setChecked(true);
-        navigationView.getMenu().getItem(1).setChecked(false);
+
+        navigationView.getMenu().findItem(R.id.go_main).setChecked(true);
     }
 
     // Listens for change in map zoom or location
@@ -151,7 +151,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             @Override
             public void onCameraIdle() {
                 float zoom = map.getCameraPosition().zoom;
-                if (zoom < 15) {
+                if (zoom < 14) {
                     if (isVisible) {
                         for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
                         isVisible = false;
@@ -186,42 +186,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent intent = null;
-        switch (item.getItemId()) {
-            case R.id.go_main:
-                // do nothing
-                break;
-            case R.id.go_favs:
-                intent = new Intent(this, FavouritesActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.bus1:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[0]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[0]);
-                break;
-            case R.id.bus2:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[1]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[1]);
-                break;
-            case R.id.bus3:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[2]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[2]);
-                break;
-            case R.id.bus4:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[3]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[3]);
-                break;
-            case R.id.bus5:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[4]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[4]);
-                break;
+
+        if (item.getItemId() != R.id.go_main) {
+            startActivity(getHamburgerIntent(recentStops, item));
         }
-        if (intent!=null) startActivity(intent);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -279,26 +247,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         }
         len += i;
-    }
-
-    // Zooms map to current location or CBD if not available
-    private void zoomToLoc() {
-
-        Location location;
-
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            location = null;
-        } else {
-            location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, true)); //todo: confirm true
-        }
-
-        if (location != null) {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17));
-        } else {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 15));
-        }
     }
 
     // Find map bounds and adds relevant stops to map
@@ -361,7 +309,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             dialog = ProgressDialog.show(this, arg1, "Please wait", true);
 
             myDB.execSQL("DELETE FROM Stops;");
-            getStops(ATApi.data.apiRoot() + ATApi.data.stops + ATApi.getAuthorization());
+            getStops(ATApi.getUrl(ATApi.API.stops, null));
         }
 
         myDB.close();
@@ -374,32 +322,30 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void run() {
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
 
-                String values = "";
-                for (int i = 0; i < stopListData.length(); i++) {
+                StringBuilder values = new StringBuilder(400000);
+                for (int i = 0; i < response.response.size(); i++) {
                     try {
-                        int location_type = stopListData.getJSONObject(i).getInt("location_type");
-                        if (location_type != 0) continue;
+                        Stop stop = response.response.get(i);
+                        if (stop.location_type != 0) continue;
 
-                        String stopID = stopListData.getJSONObject(i).getString("stop_id");
-                        String lat = stopListData.getJSONObject(i).getString("stop_lat");
-                        String lon = stopListData.getJSONObject(i).getString("stop_lon");
-                        String stopName = stopListData.getJSONObject(i).getString("stop_name");
-
-                        if (stopID.contains("_")) {
-                            int end = stopID.indexOf("_");
-                            stopID = stopID.substring(0, end);
+                        if (stop.stop_id.contains("_")) {
+                            int end = stop.stop_id.indexOf("_");
+                            stop.stop_id = stop.stop_id.substring(0, end);
                         }
-                        values += "(" + stopID + "," + lat + "," + lon + ",'" + stopName.replace("'", "''") + "')";
-                        if (i != stopListData.length()-1) values += ",";
+
+                        String values_temp = "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
+                                stop.stop_name.replace("'", "''") + "')";
+                        if (i != response.response.size()-1) values_temp += ",";
+                        values.append(values_temp);
 
                         final int num = i;
                         MainActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                dialog.setMessage("Processing data (" + num*100/stopListData.length() + "%)");
+                                dialog.setMessage("Processing data (" + num*100/response.response.size() + "%)");
                             }
                         });
 
-                    } catch (JSONException e) {e.printStackTrace();}
+                    } catch (Exception e) {e.printStackTrace();}
                 }
                 myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
                 myDB.close();
@@ -412,12 +358,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 });
             }
         };
-
-        //dialog.setTitle("Processing data");
         thread.start();
-
-        //findBounds();
-        //dialog.dismiss();
     }
 
     // Get trip data for one stop
@@ -428,11 +369,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
                 try {
                     String str = new String(responseBody);
-                    JSONObject jsonObject = new JSONObject(str);
+                    response = LoganSquare.parse(str, Response.class);
 
-                    stopListData = jsonObject.getJSONArray("response");
                     fillDatabase();
-                } catch (JSONException e) {e.printStackTrace();}
+
+                } catch (IOException e) {e.printStackTrace();}
             }
 
             @Override
@@ -470,5 +411,39 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         });
         snackbar.show();
     }
+
+}
+
+@JsonObject
+class Stop {
+
+    @JsonField
+    public int location_type;
+
+    @JsonField
+    public String stop_id;
+
+    @JsonField
+    public String stop_lat;
+
+    @JsonField
+    public String stop_lon;
+
+    @JsonField
+    public String stop_name;
+
+    @OnJsonParseComplete
+    void onParseComplete() {
+
+        String hi = this.stop_name;
+    }
+
+}
+
+@JsonObject
+class Response {
+
+    @JsonField
+    public List<Stop> response;
 
 }

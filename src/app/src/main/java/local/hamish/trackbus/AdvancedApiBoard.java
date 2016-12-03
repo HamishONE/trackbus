@@ -11,12 +11,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
-
-import static java.util.Calendar.YEAR;
 
 class AdvancedApiBoard {
 
@@ -24,14 +23,14 @@ class AdvancedApiBoard {
     private String stopID;
     private String stopName;
     private boolean showTerminating;
-    private Output out;
-    boolean active = true;
     private JSONArray tripData = null;
+    boolean active = true;
     private JSONArray stopData = null;
+    private ArrayList<OutputItem> out = new ArrayList<>();
 
     // Constructor
     AdvancedApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID, String stopName,
-                       boolean showTerminating, Output out) {
+                       boolean showTerminating, ArrayList<OutputItem> out) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.stopID = stopID;
         this.stopName = stopName;
@@ -41,18 +40,18 @@ class AdvancedApiBoard {
 
     // Get trip data for one stop
     private void getTripData(final boolean isNew) {
-        final String urlString = ATApi.data.apiRoot() + ATApi.data.stopInfo + stopID + ATApi.getAuthorization();
+        final String urlString = ATApi.getUrl(ATApi.API.stopInfo, stopID);
         AsyncHttpClient client = new AsyncHttpClient();
-        //client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
                 try {
                     String str = new String(responseBody);
                     JSONObject jsonObject = new JSONObject(str);
-
                     tripData = jsonObject.getJSONArray("response");
-                    getStopDataWithTripIDs();
+
+                    if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
+
                     produceBoard(isNew);
                 } catch (JSONException e) {e.printStackTrace();}
             }
@@ -66,10 +65,9 @@ class AdvancedApiBoard {
     }
 
     // Get all stop data
-    private void getStopData(final String tripIDs) {
-        final String urlString = ATApi.data.apiRoot() + ATApi.data.tripUpdates + ATApi.getAuthorization() + "&" + tripIDs;
+    private void getStopData() {
+        final String urlString = ATApi.getUrl(ATApi.API.tripupdates, null);
         AsyncHttpClient client = new AsyncHttpClient();
-        //client.addHeader(PublicApiV2.data.headerTerm, PublicApiV2.data.primaryKey);
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
@@ -80,8 +78,7 @@ class AdvancedApiBoard {
                     stopData = jsonObject.getJSONObject("response").getJSONArray("entity");
 
                 } catch (JSONException e) {e.printStackTrace();}
-                // Refresh board with new data
-                out.count = 0;
+
                 produceBoard(true);
             }
 
@@ -110,14 +107,13 @@ class AdvancedApiBoard {
         GregorianCalendar schTime;
         int delay;
 
-        for (int i = 0; i < out.terminatingArray.length; i++) {
-            out.terminatingArray[i] = false;
-        }
-
-        out.count = 0; // todo: some code now redundant???
+        out.clear();
 
         // Loop through all bus trips
         for (int i = 0; i < tripData.length(); i++) {
+
+            OutputItem item = new OutputItem();
+
             try {
                 // Extract key trip data
                 route = tripData.getJSONObject(i).getString("route_short_name");
@@ -149,7 +145,7 @@ class AdvancedApiBoard {
                             schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND) );
                 }
 
-                if (incStops && stopData!=null) {
+                if (stopData!=null) {
                     // Find stops sequence
                     JSONObject stopDict;
                     try {
@@ -161,7 +157,7 @@ class AdvancedApiBoard {
                             }
                         }
                         if (stopDict == null) {
-                            if (schTime.after(new Date())) {
+                            if (schTime.after(GregorianCalendar.getInstance())) {
                                 // Make strings blank
                                 stopsAwayStr = "";
                                 dueStr = "";
@@ -185,8 +181,7 @@ class AdvancedApiBoard {
                             double dueSecs = dueTime - (new Date().getTime() / 1000);
 
                             // Add to arrays
-                            out.tripArray[out.count] = tripDataTrip;
-                            out.stopSeqArray[out.count] = stopSeq;
+                            item.stopSequence = stopSeq;
 
                             // Format numbers
                             dueStr = String.format(Locale.US, "%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
@@ -199,10 +194,9 @@ class AdvancedApiBoard {
                 } else {
 
                     // Add to arrays
-                    out.tripArray[out.count] = tripDataTrip;
-                    out.stopSeqArray[out.count] = 100;
+                    item.stopSequence = 100;
 
-                    if (schTime.after(new Date())) {
+                    if (schTime.after(GregorianCalendar.getInstance())) {
                         // Make strings blank
                         stopsAwayStr = "";
                         dueStr = "";
@@ -212,62 +206,47 @@ class AdvancedApiBoard {
                 }
 
                 // Check for terminating or scheduled service
-                out.scheduledArray[out.count] = false;
-                out.terminatingArray[out.count] = false;
+                item.isScheduled = false;
+                item.isTerminating = false;
                 if (stopSeq == 1) {
-                    out.scheduledArray[out.count] = true;
+                    item.isScheduled = true;
                 } else if (destination.contains(stopName)) {
-                    out.terminatingArray[out.count] = true; //no longer works, consider removing
+                    item.isTerminating = true; //todo: no longer works, consider removing
                 }
 
                 DateFormat df = new SimpleDateFormat("hh:mm a", Locale.US);
                 String schTimeStrNew = df.format(schTime.getTime());
 
-                out.routeArray[out.count] = route;
-                out.schTimeArray[out.count] = schTimeStrNew;
-                out.stopsAwayArray[out.count] = stopsAwayStr;
-                out.headsignArray[out.count] = destination;
-                out.dueTimeArray[out.count] = dueStr;
-                out.dateSchArray[out.count] = schTime.getTimeInMillis() / 1000;
-                out.count++;
-            } catch (JSONException e) {e.printStackTrace();}
-        }
-        if (active && (isNew || incStops)) serviceBoardActivity.produceView(incStops);
-        if (active && incStops) serviceBoardActivity.allBusesHelper.simplify(out.tripArray, out.routeArray, out.stopSeqArray);
-    }
+                item.trip = tripDataTrip;
+                item.route = route;
+                item.schTime = schTimeStrNew;
+                item.stopsAway = stopsAwayStr;
+                item.headsign = destination;
+                item.dueTime = dueStr;
+                item.dateScheduled = schTime.getTimeInMillis() / 1000;
+                out.add(item);
 
-    // Extract trip ids relevant to route from tripData and call stopData for these
-    private void getStopDataWithTripIDs() {
-        String tripsForApi = "tripid=";
-        int i;
-        for (i = 0; i < tripData.length(); i++) {
-            try {
-                tripsForApi += tripData.getJSONObject(i).getString("trip_id");
-                tripsForApi += ",";
-                out.tripArray[i] = tripData.getJSONObject(i).getString("trip_id");
             } catch (JSONException e) {e.printStackTrace();}
         }
-        out.count = i;
-        if (active) serviceBoardActivity.prepareMap(); // todo: stop showing future stops, send other arrays
-        //getStopData(tripsForApi);
+
+        if (active && (isNew || incStops)) serviceBoardActivity.produceView(incStops);
+        if (active && incStops) serviceBoardActivity.allBusesHelper.simplify();
     }
 
     void callAPIs() {
         getTripData(true);
-        getStopData(""); //new
+        getStopData(); //new
 
         //new CombinedApiBoard(serviceBoardActivity).updateData();
     }
 
     // Refreshes all data
     void updateData() {
+
         tripData = null;
         stopData = null;
-        out.count = 0;
         getTripData(false);
-        getStopData(""); //new
-
-
+        getStopData(); //new
     }
 
     // Refreshes board to show/hide terminating services
@@ -276,21 +255,18 @@ class AdvancedApiBoard {
         produceBoard(false);
     }
 
-    // Object for outputs
-    static class Output {
+    static class OutputItem {
 
-        String listArray[] = new String[1000];
-        int stopSeqArray[] = new int[1000];
-        String routeArray[] = new String[1000];
-        String tripArray[] = new String[1000];
-        String headsignArray[] = new String[1000];
-        String schTimeArray[] = new String[1000];
-        String stopsAwayArray[] = new String[1000];
-        String dueTimeArray[] = new String[1000];
-        boolean terminatingArray[] = new boolean[1000];
-        boolean scheduledArray[] = new boolean[1000];
-        long dateSchArray[] = new long[1000];
-        int count = 0;
+        int stopSequence;
+        String route;
+        String trip;
+        String headsign;
+        String schTime;
+        String stopsAway;
+        String dueTime;
+        boolean isTerminating;
+        boolean isScheduled;
+        long dateScheduled;
     }
 
     // Show snackbar and allow refreshing on HTTP failure

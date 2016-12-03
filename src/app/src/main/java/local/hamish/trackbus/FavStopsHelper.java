@@ -100,8 +100,8 @@ class FavStopsHelper {
         FrameLayout container = new FrameLayout(app);
         FrameLayout.LayoutParams params = new  FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = (int) Util.convertDpToPixel(20, app);
-        params.rightMargin = (int) Util.convertDpToPixel(10, app);
+        params.leftMargin = app.getResources().getDimensionPixelSize(R.dimen.stop_dialogue_margin_left);
+        params.rightMargin = app.getResources().getDimensionPixelSize(R.dimen.stop_dialogue_margin_right);
         input.setLayoutParams(params);
         container.addView(input);
 

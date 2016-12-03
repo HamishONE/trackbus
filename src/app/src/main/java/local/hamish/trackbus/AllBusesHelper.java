@@ -14,14 +14,13 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
 class AllBusesHelper {
 
-    private String[] tripsArray = new String[1000];
-    private String[] routesArray = new String[1000];
-    private int[] stopSeqArray = new int[1000];
+    private ArrayList<AdvancedApiBoard.OutputItem> out;
     private GoogleMap map;
     private JSONArray locData;
     Marker[] markers = new Marker[1000];
@@ -30,36 +29,31 @@ class AllBusesHelper {
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
     private FavouritesHelper favouritesHelper;
-
     private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
     // Constructor
-    AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map, FavouritesHelper favouritesHelper) {
+    AllBusesHelper(ServiceBoardActivity serviceBoardActivity, View circle, GoogleMap map) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.map = map;
         this.circle = circle;
-        this.favouritesHelper = favouritesHelper;
+        favouritesHelper = new FavouritesHelper(serviceBoardActivity);
+
+        this.out = serviceBoardActivity.out;
     }
 
     // Calls the API
-    void callAPI(AdvancedApiBoard.Output out) {
-        this.tripsArray = out.tripArray;
-        this.routesArray = out.routeArray;
-        this.stopSeqArray = out.stopSeqArray;
+    void callAPI() {
 
         String allTrips = "&tripid=";
-        for (int i = 0; i < out.count; i++) {
-            allTrips += out.tripArray[i] + ",";
+        for (int i = 0; i < out.size(); i++) {
+            allTrips += out.get(i).trip + ",";
         }
-        Log.e("Num requested: ", String.valueOf(out.count));
-        getData(ATApi.data.apiRoot() + ATApi.data.vehicleLocations + ATApi.getAuthorization() + allTrips);
+        Log.e("Num requested: ", String.valueOf(out.size()));
+        getData(ATApi.getUrl(ATApi.API.vehiclelocations, null) + allTrips);
     }
 
     // Calls the API
-    void simplify(String[] tripsArray, String[] routesArray, int[] stopSeqArray) {
-        this.tripsArray = tripsArray;
-        this.routesArray = routesArray;
-        this.stopSeqArray = stopSeqArray;
+    void simplify() {
 
         if (locData != null) main();
     }
@@ -97,26 +91,36 @@ class AllBusesHelper {
 
         // Remove existing markers
         for (int i=0; i<markLen; i++) {markers[i].remove();}
+        markLen = 0;
+        mHashMap.clear();
 
         try {
-            for (int i = 0; i < tripsArray.length; i++) {
+            for (int i = 0; i < out.size(); i++) {
 
-                if (tripsArray[i] == null) continue;
+                if (out.get(i).trip == null) {
+                    continue;
+                }
 
                 for (int j = 0; j < locData.length(); j++) {
-                    locTripID = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("trip").getString("trip_id");
-                    if (tripsArray[i].equals(locTripID)) {
-                        lat = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("latitude");
-                        lon = locData.getJSONObject(j).getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
-                        latLng = new LatLng(lat, lon);
+                    JSONObject vehicle = locData.getJSONObject(j).getJSONObject("vehicle");
+                    locTripID = vehicle.getJSONObject("trip").getString("trip_id");
+                    if (out.get(i).trip.equals(locTripID)) {
+                        lat = vehicle.getJSONObject("position").getDouble("latitude");
+                        lon = vehicle.getJSONObject("position").getDouble("longitude");
+
+                        if (vehicle.getJSONObject("trip").has("start_time")) {
+                            latLng = new LatLng(lat, lon);
+                        } else {
+                            latLng = Util.fixTrainLocation(lat, lon);
+                        }
 
                         Marker marker;
-                        if (favouritesHelper.isFavRoute(routesArray[i])) {
-                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(routesArray[i])
+                        if (favouritesHelper.isFavRoute(out.get(i).route)) {
+                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.get(i).route)
                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.heart_icon_pink)));
                         } else {
-                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(routesArray[i]));
+                            marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.get(i).route));
                         }
                         markers[markLen++] = marker;
                         mHashMap.put(marker, i);
@@ -140,10 +144,10 @@ class AllBusesHelper {
             public void onInfoWindowClick(Marker arg0) {
                 String route = arg0.getTitle();
                 int pos = mHashMap.get(arg0);
-                String trip = tripsArray[pos];
-                int stopSeq = stopSeqArray[pos];
+                String trip = out.get(pos).trip;
+                int stopSeq = out.get(pos).stopSequence;
 
-                serviceBoardActivity.callTracker(trip, stopSeq, route, serviceBoardActivity.out.dateSchArray[pos]);
+                serviceBoardActivity.callTracker(trip, stopSeq, route, out.get(pos).dateScheduled);
             }
         });
     }

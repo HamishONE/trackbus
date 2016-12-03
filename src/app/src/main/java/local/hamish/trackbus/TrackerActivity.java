@@ -40,6 +40,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.nullwire.trace.ExceptionHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -88,6 +89,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tracker);
 
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
+
         mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         // Setup action bar
@@ -123,25 +126,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         stopID = intent.getStringExtra(ServiceBoardActivity.EXTRA_STOP);
 
         // Set activity title using special names if possible
-        switch(route) {
-            case "SKY":
-                title = "SkyBus";
-                break;
-            case "INN":
-                title = "Inner Link";
-                break;
-            case "CTY":
-                title = "City Link";
-                break;
-            case "OUT":
-                title = "Outer Link";
-                break;
-            case "NEX":
-                title = "Northern Express";
-                break;
-            default:
-                title = "Route " + route;
-        }
+        title = Util.beautifyRouteName(route);
         setTitle(title);
 
         // Link to map fragment and show location if allowed
@@ -154,14 +139,16 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Util.setupMap(this, map);
 
         // Add stop location to map
-        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
-        resultSet.moveToFirst();
-        double lat = resultSet.getDouble(0);
-        double lon = resultSet.getDouble(1);
-        resultSet.close();
-        myDB.close();
-        map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+        if (stopID != null) {
+            SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+            Cursor resultSet = myDB.rawQuery("SELECT lat, lon FROM Stops WHERE stopID = " + stopID, null);
+            resultSet.moveToFirst();
+            double lat = resultSet.getDouble(0);
+            double lon = resultSet.getDouble(1);
+            resultSet.close();
+            myDB.close();
+            map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+        }
 
         // Call API
         callApi();
@@ -199,43 +186,13 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent intent = null;
-        switch (item.getItemId()) {
-            case R.id.go_main:
-                intent = new Intent(this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.go_favs:
-                intent = new Intent(this, FavouritesActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.bus1:
-                onBackPressed();
-                break;
-            case R.id.bus2:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[1]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[1]);
-                break;
-            case R.id.bus3:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[2]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[2]);
-                break;
-            case R.id.bus4:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[3]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[3]);
-                break;
-            case R.id.bus5:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[4]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[4]);
-                break;
-        }
-        if (intent!=null) startActivity(intent);
 
-        stopCode();
+        if (item.getItemId() != R.id.bus1) {
+            startActivity(getHamburgerIntent(recentStops, item));
+        } else {
+            finish();
+        }
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -249,16 +206,29 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
         active = true;
         showNotification = showNotificationChecked;
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.getMenu().getItem(0).setChecked(false);
-        navigationView.getMenu().getItem(1).setChecked(false);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         new DoReset().updateTime();
+    }
+
+    /*
+    @Override
+    protected void onStop() {
+        super.onStop();
+        active = false;
+    }
+    */
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (!drawer.isDrawerOpen(GravityCompat.START)) {
+            stopCode();
+        }
+        super.onBackPressed();
     }
 
     void stopCode() {
@@ -270,8 +240,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.data.apiRoot() + ATApi.data.shapeByTripId + tripID + ATApi.getAuthorization());
-        getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId, tripID));
+        getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
     }
 
     private void updateTimestamp() {
@@ -296,37 +266,68 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         int stopsAway = 0;
         int secsAgo = 0;
         int delay = 0;
+        boolean isTrain = false;
         JSONObject stopDict = null;
-        JSONObject locDict;
+        JSONObject locDict = null;
         Double bearingNew = null;
 
         try {
             // Get JSON Arrays
-            stopDict = newData.getJSONObject(0);
-            locDict = newData.getJSONObject(1);
+            //stopDict = newData.getJSONObject(0);
+            //locDict = newData.getJSONObject(1);
+
+            for (int i=0; i<newData.length(); i++) {
+                JSONObject obj = newData.getJSONObject(i);
+                if (obj.has("trip_update") && obj.getJSONObject("trip_update").getJSONObject("trip").
+                        getString("trip_id").equals(tripID)) {
+                    stopDict = obj;
+                }
+                if (obj.has("vehicle") && obj.getJSONObject("vehicle").getJSONObject("trip").
+                        getString("trip_id").equals(tripID)) {
+                    locDict = obj;
+                }
+            }
+
+            if (locDict == null) {
+                Log.d("HamishDebug", "Loc Dict not found");
+                return;
+                //todo: show location not available message
+            }
 
             // Retrieve and calculate values
-            lat2 = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("latitude");
-            long2 = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("longitude");
-            stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                    .getInt("stop_sequence");
+            JSONObject position =locDict.getJSONObject("vehicle").getJSONObject("position");
+            lat2 = position.getDouble("latitude");
+            long2 = position.getDouble("longitude");
+            if (position.has("bearing")) bearingNew = position.getDouble("bearing");
+
+            if (stopDict == null /*|| stopSeq == -1*/) {
+                stopsAway = -1;
+            } else {
+                stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_sequence");
+            }
+
             lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
             secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
 
-            //** MUST BE LAST **//
-            bearingNew = locDict.getJSONObject("vehicle").getJSONObject("position").getDouble("bearing");
+            isTrain = !locDict.getJSONObject("vehicle").getJSONObject("trip").has("start_time");
 
         } catch (JSONException e) {e.printStackTrace();}
 
-        try {
-            delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                    .getJSONObject("arrival").getInt("delay");
-        } catch (JSONException e) {
+        if (stopDict != null) { //todo: CLEAN UP!!!!
             try {
                 delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
-                        .getJSONObject("departure").getInt("delay");
-            } catch (JSONException f) {f.printStackTrace();}
-        }
+                        .getJSONObject("arrival").getInt("delay");
+            } catch (JSONException e) {
+                try {
+                    delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update")
+                            .getJSONObject("departure").getInt("delay");
+                } catch (JSONException f) {
+                    f.printStackTrace();
+                }
+            }
+        } /*else {
+            delay = 0; //todo: change
+        }*/
 
         String notiText = "";
 
@@ -353,23 +354,33 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         }
 
         // Set due time header
-        long dueSec = schTime + delay - new Date().getTime()/1000;
-        if (dueSec < 60) {
-            tvDue.setText("Due: *");
-            notiText += "Due: *" + "\n";
+        String dueStr;
+        if (schTime == -1 || stopDict == null) {
+            dueStr = "-";
         } else {
-            tvDue.setText("Due: " + String.valueOf(dueSec/60) + "'");
-            notiText += "Due: " + String.valueOf(dueSec/60) + "'" + "\n";
+            long dueSec = schTime + delay - new Date().getTime() / 1000;
+            if (dueSec < 60) {
+                dueStr = "*";
+            } else {
+                dueStr = String.valueOf(dueSec / 60) + "'";
+            }
         }
+        tvDue.setText("Due: " + dueStr);
+        notiText += "Due: " + dueStr + "\n";
 
         // Set stops away and stop thread if bus departed
-        if (stopsAway < 1) {
-            tvStops.setText("Stops: *");
-            notiText += "Stops: *";
-            if (stopsAway < 0) return;
+        if (stopSeq == -1 || stopDict == null) {
+            tvStops.setText("Stops: -");
+            notiText += "Stops: n/a";
         } else {
-            tvStops.setText("Stops: " + Integer.toString(stopsAway));
-            notiText += "Stops: " + Integer.toString(stopsAway);
+            if (stopsAway < 1) {
+                tvStops.setText("Stops: *");
+                notiText += "Stops: *";
+                if (stopsAway < 0) return;
+            } else {
+                tvStops.setText(String.format(Locale.US, "Stops: %d", stopsAway));
+                notiText += "Stops: " + Integer.toString(stopsAway);
+            }
         }
 
         //if (showNotification) showNotification(notiText);
@@ -379,7 +390,14 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             lat = lat2;
             longi = long2;
             if (bearingNew != null) bearing = bearingNew;
-            LatLng latLng = new LatLng(lat, longi);
+
+            LatLng latLng;
+            if (!isTrain) {
+                latLng = new LatLng(lat, longi);
+            } else {
+                latLng = Util.fixTrainLocation(lat, longi);
+            }
+
             drawMap(latLng);
         }
 
@@ -387,12 +405,12 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
             }
         }, timeDelay);
     }
 
-    // Moves the market and repositions map
+    // Moves the marker and repositions map
     private void drawMap(LatLng latLng) {
 
         if (marker != null) marker.remove();
@@ -424,33 +442,20 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
         double pointLat = 0.0;
         double pointLong = 0.0;
-        LatLng[] routePoints = new LatLng[10000];
-        int j;
-        double dist;
-        double distMax = 1000;
-        int len = -1;
+        LatLng[] routePoints = new LatLng[pointData.length()];
 
-        for (j = 0; j < pointData.length(); j++) {
+        for (int j = 0; j < pointData.length(); j++) {
             try {
                 pointLat = pointData.getJSONObject(j).getDouble("shape_pt_lat");
                 pointLong = pointData.getJSONObject(j).getDouble("shape_pt_lon");
             } catch (JSONException e) {e.printStackTrace();}
 
-            if (len != -1) {
-                distMax = 1000;
-                for (int i = 0; i <= len; i++) {
-                    dist = Math.sqrt(Math.pow(pointLat - routePoints[i].latitude, 2)
-                            + Math.pow(pointLong - routePoints[i].longitude, 2)); // in degrees
-                    dist *= 60 * 1.85 * 1000; // in metres
-                    if (dist < distMax) distMax = dist;
-                }
-            }
-            if (distMax > 0.001) routePoints[++len] = new LatLng(pointLat, pointLong);
+            routePoints[j] = new LatLng(pointLat, pointLong);
         }
 
         map.addPolyline(new PolylineOptions()
-                .add(Arrays.copyOf(routePoints, len+1))
-                .width(5)
+                .add(routePoints)
+                .width(getResources().getDimensionPixelSize(R.dimen.route_line_thickness))
                 .color(Color.RED));
     }
 
@@ -460,6 +465,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
+                if (!active) return;
                 try {
                     String str = new String(responseBody);
                     JSONObject jsonObject = new JSONObject(str);
@@ -467,7 +473,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                     newData = jsonObject.getJSONObject("response").getJSONArray("entity");
                     main();
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(); //todo: what are we doing?
+                    //getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
+                    //handleError(-5);
                 }
             }
 
@@ -490,7 +498,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         circle.setVisibility(View.GONE);
         // Prepare message for snackbar
         String message;
-        if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
+        if (statusCode == -5) message = "JSON parsing error"; //todo: expand to other copies
+        else if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
             message = "Please connect to the internet";
         else if (statusCode == 0) message = "Network error (no response)";
         else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
@@ -503,7 +512,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.data.apiRoot() + ATApi.data.realtime + ATApi.getAuthorization() + "&tripid=" + tripID);
+                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
             }
         });
        snackbar.show();

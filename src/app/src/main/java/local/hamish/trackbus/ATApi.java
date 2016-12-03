@@ -14,24 +14,60 @@ class ATApi {
     private static int drift = 0;
     static int errorCount = 0;
 
-    public static class data {
-
-        static String apiRoot() {
-            if (currentApiVersion == API_VERSION.APIv2) {
-                return "https://api.at.govt.nz/v2/";
-            } else  {
-                return "https://api.at.govt.nz/v1/";
-            }
-        }
-
-        final static String stopInfo = "gtfs/stops/stopinfo/";
-        final static String vehicleLocations = "public-restricted/realtime/vehiclelocations/";
-        final static String tripUpdates = "public-restricted/realtime/tripUpdates/";
-        final static String realtime = "public-restricted/realtime/";
-        final static String shapeByTripId = "gtfs/shapes/tripId/";
-        final static String stops = "gtfs/stops";
-        final static String departures = "public-restricted/departures/";
+    enum API {
+        vehiclelocations,
+        tripupdates,
+        realtime,
+        routes,
+        ferrys,
+        stopInfo,
+        shapeByTripId,
+        stops,
+        departures,
+        bearings
     }
+
+    private final static String ATRoot = "https://api.at.govt.nz/v2/";
+    private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
+
+    static String getUrl(API api, String param) {
+        switch (api) {
+            // Special
+            case bearings:
+                return "http://hamishserver.ddns.net/buffer/bearings.php";
+            // Server buffer
+            case vehiclelocations:
+                return HamishRoot + "vehiclelocations";
+            case tripupdates:
+                return HamishRoot + "tripupdates";
+            case realtime:
+                return HamishRoot + "realtime";
+            case routes:
+                return HamishRoot + "routes";
+            case ferrys:
+                return HamishRoot + "ferrys";
+            // AT direct
+            case stopInfo:
+                if (param == null) return null;
+                return ATRoot + "gtfs/stops/stopinfo/" + param + getAuthorization();
+            case shapeByTripId:
+                if (param == null) return null;
+                return ATRoot + "gtfs/shapes/tripId/" + param + getAuthorization();
+            case stops:
+                return ATRoot + "gtfs/stops" + getAuthorization();
+            case departures:
+                if (param == null) return null;
+                return ATRoot + "public-restricted/departures/" + param + getAuthorization();
+        }
+        return null;
+    }
+
+    //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
+    //final static String routes = ATRoot + "gtfs/routes";
+    //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
+    //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
+    //final static String realtime = ATRoot + "public-restricted/realtime/";
+
 
     // Returns string to append to api call
     static String getAuthorization() {
@@ -62,7 +98,7 @@ class ATApi {
         if (currentApiVersion == API_VERSION.APIv2) return;
 
         final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
-        getData(ATApi.data.apiRoot() + "time/epoch?api_key=" + epochKey);
+        getData("https://api.at.govt.nz/v1/time/epoch?api_key=" + epochKey);
     }
 
     // Finishes getting the drift

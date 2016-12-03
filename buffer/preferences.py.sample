@@ -1,0 +1,15 @@
+def preferences():
+
+	# MySQL Server
+	host = "<MySQL hostname or ip address>" 
+	port = <MySQL port>
+	database = "<MySQL databse>" 
+	user = "<MySQL user with priveleges over database>"
+	password = "<matching password>"
+	
+	# Constants
+	timeout = 10
+	refresh_freq = 3
+	
+	# Do not edit
+	return host,port,port,database,user,password,timeout,refresh_freq

@@ -46,6 +46,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
+import com.nullwire.trace.ExceptionHandler;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -65,7 +67,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private AdvancedApiBoard newApiBoard;
     private TraditionalApiBoard oldApiBoard;
     public AllBusesHelper allBusesHelper;
-    public AdvancedApiBoard.Output out = new AdvancedApiBoard.Output();
+    public ArrayList<AdvancedApiBoard.OutputItem> out = new ArrayList<>();
 
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
@@ -74,6 +76,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_board);
+
+        ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup tabs
         DemoCollectionPagerAdapter mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(getSupportFragmentManager());
@@ -132,11 +136,11 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         // Read terminating visibility
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         showTerminating = settings.getBoolean("showTerminating", false);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
 
-        favouritesHelper = new FavouritesHelper(myDB, this);
+        favouritesHelper = new FavouritesHelper(this);
 
         //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
         newApiBoard = new AdvancedApiBoard(this, stopID, stopName, showTerminating, out);
@@ -153,7 +157,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         boolean useMaxx = settings.getBoolean("useMaxx", false);
         if (useMaxx) menu.findItem(R.id.useMaxx).setChecked(true);
         else menu.findItem(R.id.useAT).setChecked(true);
@@ -180,41 +184,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Intent intent = null;
-        switch (item.getItemId()) {
-            case R.id.go_main:
-                intent = new Intent(this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.go_favs:
-                intent = new Intent(this, FavouritesActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                break;
-            case R.id.bus1:
-                //do nothing
-                break;
-            case R.id.bus2:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[1]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[1]);
-                break;
-            case R.id.bus3:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[2]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[2]);
-                break;
-            case R.id.bus4:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[3]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[3]);
-                break;
-            case R.id.bus5:
-                intent = new Intent(this, ServiceBoardActivity.class);
-                intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[4]));
-                intent.putExtra(MainActivity.EXTRA_STOP_NAME, recentStops.stopNames[4]);
-                break;
+
+        if (item.getItemId() != R.id.bus1) {
+            startActivity(getHamburgerIntent(recentStops, item));
         }
-        if (intent!=null) startActivity(intent);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -291,15 +264,11 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         super.onResume();
 
         new DoReset().updateTime();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.getMenu().getItem(0).setChecked(false);
-        navigationView.getMenu().getItem(1).setChecked(false);
     }
 
     private void changeTraditionalSource(boolean useMaxx) {
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean("useMaxx", useMaxx);
         editor.apply();
@@ -325,7 +294,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         if (b.length > 0) incStops = b[0];
 
         ListView mListView = (ListView) findViewById(R.id.new_list);
-        mListView.setAdapter(new CustomArrayAdapter(this, Arrays.copyOf(out.listArray, out.count)));
+        mListView.setAdapter(new CustomArrayAdapter(this, new String[out.size()])); //todo: listArray is just blank!
 
         // Remove loading bars
         if (incStops) {
@@ -339,9 +308,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 /*if (out.tripArray[position] == null) {
                     Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
-                } else*/ {
-                    callTracker(out.tripArray[position], out.stopSeqArray[position],
-                            out.routeArray[position], out.dateSchArray[position]);
+                } else*/ { //todo: replace
+                    callTracker(out.get(position).trip, out.get(position).stopSequence,
+                            out.get(position).route, out.get(position).dateScheduled);
                 }
             }
         });
@@ -350,7 +319,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String route = out.routeArray[pos];
+                String route = out.get(pos).route;
                 favouritesHelper.changeFavRoute(route);
                 return true;
             }
@@ -360,14 +329,13 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     // Sets up the all buses view
     public void prepareMap() {
 
-        if (firstTime) {
+        if (allBusesHelper == null) {
 
-            firstTime = false;
             View circle = findViewById(R.id.loadingPanelMap);
-            allBusesHelper = new AllBusesHelper(this, circle, map, favouritesHelper);
+            allBusesHelper = new AllBusesHelper(this, circle, map);
         }
 
-        allBusesHelper.callAPI(out);
+        allBusesHelper.callAPI();
     }
 
     // Produces the list view and waits for click
@@ -458,12 +426,11 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private void changeTerminating() {
         myMenu.getItem(1).setChecked(showTerminating = !showTerminating);
 
-        SharedPreferences settings = getPreferences(0);
+        SharedPreferences settings = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean("showTerminating", showTerminating);
         editor.apply();
 
-        out.count = 0;
         newApiBoard.changeTerminating(showTerminating);
     }
 
@@ -545,26 +512,27 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             TextView dueTime = ((TextView) rowView.findViewById(R.id.col3));
             TextView stopsAway = ((TextView) rowView.findViewById(R.id.col4));
 
-            route.setText(out.routeArray[position]);
-            scheduled.setText(out.schTimeArray[position]);
-            dueTime.setText(out.dueTimeArray[position]);
+            route.setText(out.get(position).route);
+            scheduled.setText(out.get(position).schTime);
 
-            if (!out.stopsAwayArray[position].equals("") && Integer.valueOf(out.stopsAwayArray[position]) < 1) {
-                stopsAway.setText("*");
+            if (!out.get(position).stopsAway.equals("") && Integer.valueOf(out.get(position).stopsAway) < 1) {
+                stopsAway.setText("**");
+                dueTime.setText(getString(R.string.message_negative_stops_away));
             } else {
-                stopsAway.setText(out.stopsAwayArray[position]);
+                stopsAway.setText(out.get(position).stopsAway);
+                dueTime.setText(out.get(position).dueTime);
             }
 
             // Change colour of row if terminating
-            if (out.terminatingArray[position]) {
+            if (out.get(position).isTerminating) {
                 rowView.setBackgroundColor(0x604D4D4D); //Dark grey
-            } else if (out.scheduledArray[position]) {
+            } else if (out.get(position).isScheduled) {
                 scheduled.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
             }
 
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            String routeName = out.routeArray[position];
+            String routeName = out.get(position).route;
             SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
             myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
             Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
@@ -633,10 +601,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             // Change column header to pier/platform as appropriate
             switch (Util.findStopType(ServiceBoardActivity.stopName)) {
                 case 1:
-                    ((TextView) rootView.findViewById(R.id.routeHed)).setText("Plat.");
+                    ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.train_platform_label));
                     break;
                 case 2:
-                    ((TextView) rootView.findViewById(R.id.routeHed)).setText("Pier");
+                    ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.ferry_pier_label));
             }
 
             /*
