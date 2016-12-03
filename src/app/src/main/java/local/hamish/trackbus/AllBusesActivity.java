@@ -342,6 +342,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                             if (trip_id.equals(selectedTrip)) {
                                 onMarkerClick(marker);
                                 marker.showInfoWindow();
+                                selectedTrip = trip_id;
                             }
                         }
                     });
