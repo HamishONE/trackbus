@@ -269,11 +269,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         " AND longitude BETWEEN " + minLon + " AND " + maxLon;
                 Cursor resultSet = myDB.rawQuery(sql, null);
 
-                Bitmap busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
-                Bitmap trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
-                Bitmap ddBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_brown);
-                Bitmap favBusBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_red);
-
                 resultSet.moveToFirst();
                 for (int i = 0; i < resultSet.getCount(); i++) {
 
@@ -302,21 +297,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     markerOptions.position(new LatLng(latitude, longitude));
                     markerOptions.anchor(0.5F, 0.5F);
 
-                    Bitmap vehicleBitmap;
-                    int height_dp;
-                    if (isTrain) {
-                        vehicleBitmap = trainBitmap;
-                        height_dp = 50;
-                    } else if (Util.isFavouriteRoute(getApplicationContext(), route))  {
-                        vehicleBitmap = favBusBitmap;
-                        height_dp = 40;
-                    } else if (ATApi.isDoubleDecker(vehicle_id))  {
-                        vehicleBitmap = ddBitmap;
-                        height_dp = 40;
-                    } else {
-                        vehicleBitmap = busBitmap;
-                        height_dp = 40;
-                    }
+                    SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
+                    Integer height_dp = setBitmap.height_dp;
+                    Bitmap vehicleBitmap = setBitmap. vehicleBitmap;
 
                     Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
                     Canvas canvas = new Canvas(imageBitmap);
@@ -536,6 +519,48 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         Tag tag = (Tag) marker.getTag();
         Util.changeFavRoute(this, tag.route);
         done(true);
+    }
+
+    private Bitmap busBitmap;
+    private Bitmap trainBitmap;
+    private Bitmap ddBitmap;
+    private Bitmap favBusBitmap;
+    private Bitmap favTrainBitmap;
+
+    private class SetBitmap {
+
+        Bitmap vehicleBitmap;
+        int height_dp;
+
+        SetBitmap(boolean isTrain, String route, String vehicle_id) {
+
+            if (busBitmap == null) {
+                busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
+                trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
+                ddBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_brown);
+                favBusBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_red);
+                favTrainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_red);
+            }
+
+            boolean isFav = Util.isFavouriteRoute(getApplicationContext(), route);
+            if (isTrain) {
+                height_dp = 50;
+                if (isFav) {
+                    vehicleBitmap = favTrainBitmap;
+                } else {
+                    vehicleBitmap = trainBitmap;
+                }
+            } else {
+                height_dp = 40;
+                if (isFav) {
+                    vehicleBitmap = favBusBitmap;
+                } else if (ATApi.isDoubleDecker(vehicle_id)) {
+                    vehicleBitmap = ddBitmap;
+                } else {
+                    vehicleBitmap = busBitmap;
+                }
+            }
+        }
     }
 
     static private class Tag {
