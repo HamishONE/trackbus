@@ -99,10 +99,7 @@ class ATApi {
 
         if (currentApiVersion == API_VERSION.APIv2) {
 
-            //final String key = "fd2c776a9b0543d9b5e3fba4a2e25576"; //Hamish primary
-            //final String key = "8f65bac859494abf9a8808983a3c8ab5"; //Hamish secondary
             final String key = "323741614c1c4b9083299adefe100aa6"; //AT internal
-
             return "?subscription-key=" + key;
 
         } else {

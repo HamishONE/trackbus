@@ -1,3 +1,5 @@
+<?php include "key.php"; ?>
+
 <html>
 <head>
 
@@ -6,7 +8,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/sha1.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/hmac-sha1.js"></script>
-	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIe_riCb4yfZjBjP23u9J4nxQpBxy8peQ&callback=initMap" async defer></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=<?php echo $key; ?>&callback=initMap" async defer></script>
 	<script src="buses.js"></script>
 	
 	<style>	
