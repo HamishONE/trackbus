@@ -531,8 +531,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
             String routeName = out.get(position).route;
+            String vehicle_id = out.get(position).vehicle_id;
+
             if (Util.isFavouriteRoute(getApplicationContext(), routeName)) {
                 imageView.setImageResource(R.drawable.heart_icon_pink);
+            } else if (ATApi.isDoubleDecker(vehicle_id)) {
+                imageView.setImageResource(R.drawable.double_decker_bus);
             }
 
             return rowView;
