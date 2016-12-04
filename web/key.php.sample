@@ -1,0 +1,5 @@
+ <?php
+ 
+ $key="<google maps javascript api key here>";
+ 
+ ?>
