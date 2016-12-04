@@ -10,6 +10,7 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -33,6 +34,7 @@ dependencies {
     compile 'com.google.android.gms:play-services:10.0.1'
     compile 'com.loopj.android:android-async-http:1.4.9'
     //compile 'net.minidev:json-smart:2.2.1'
+    compile 'com.android.support:multidex:1.0.1'
     compile project(':drag_sort_list')
     compile files('libs/trace.jar')
 }

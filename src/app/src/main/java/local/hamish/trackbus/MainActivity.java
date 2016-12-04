@@ -321,8 +321,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             @Override
             public void run() {
                 SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+                myDB.beginTransactionNonExclusive();
 
-                StringBuilder values = new StringBuilder(400000);
                 for (int i = 0; i < response.response.size(); i++) {
                     try {
                         Stop stop = response.response.get(i);
@@ -333,10 +333,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                             stop.stop_id = stop.stop_id.substring(0, end);
                         }
 
-                        String values_temp = "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
+                        String values = "(" + stop.stop_id + "," + stop.stop_lat + "," + stop.stop_lon + ",'" +
                                 stop.stop_name.replace("'", "''") + "')";
-                        if (i != response.response.size()-1) values_temp += ",";
-                        values.append(values_temp);
+                        myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
 
                         final int num = i;
                         MainActivity.this.runOnUiThread(new Runnable() {
@@ -347,7 +346,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
                     } catch (Exception e) {e.printStackTrace();}
                 }
-                myDB.execSQL("INSERT INTO Stops VALUES" + values + ";");
+                myDB.setTransactionSuccessful();
+                myDB.endTransaction();
                 myDB.close();
 
                 MainActivity.this.runOnUiThread(new Runnable() {
