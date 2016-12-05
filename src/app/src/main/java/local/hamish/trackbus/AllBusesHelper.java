@@ -151,20 +151,16 @@ class AllBusesHelper {
 
     // Show snackbar and allow refreshing on HTTP failure
     void handleError(int statusCode) {
+
         View circle = serviceBoardActivity.findViewById(R.id.loadingPanelMap);
         if (circle == null) {
             Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
-        // Show snackbar
+
+        String message = Util.generateErrorMessage(serviceBoardActivity, statusCode);
+
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);
         serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);

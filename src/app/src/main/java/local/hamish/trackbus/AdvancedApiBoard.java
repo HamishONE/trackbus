@@ -286,13 +286,9 @@ class AdvancedApiBoard {
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
+
+        String message = Util.generateErrorMessage(serviceBoardActivity, statusCode);
+
         // Show snackbar
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);

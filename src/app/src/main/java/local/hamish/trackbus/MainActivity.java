@@ -392,15 +392,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     // Show snackbar and allow refreshing on HTTP failure
     private void handleError(int statusCode) {
+
         dialog.dismiss();
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
-        // Show snackbar
+        String message = Util.generateErrorMessage(this, statusCode);
         View view = findViewById(R.id.cordLayout);
         Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
         snackbar.setAction("Retry", new View.OnClickListener() {

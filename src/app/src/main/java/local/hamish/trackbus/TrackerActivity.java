@@ -241,7 +241,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     private void callApi() {
 
         getPointData(ATApi.getUrl(ATApi.API.shapeByTripId, tripID));
-        getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+        getRealtimeData();
     }
 
     private void updateTimestamp() {
@@ -409,7 +409,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         handler.postDelayed(new Runnable() {
             public void run() {
                 findViewById(R.id.loadingPanelSmall).setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+                getRealtimeData();
             }
         }, timeDelay);
     }
@@ -464,7 +464,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     }
 
     // Get realtime data for trip
-    private void getRealtimeData(String urlString) {
+    private void getRealtimeData() {
+        String urlString = ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID;
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -500,15 +501,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (statusCode == -5) message = "JSON parsing error"; //todo: expand to other copies
-        else if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
-        // Show snackbar
+
+        String message = Util.generateErrorMessage(this, statusCode);
+
         if (snackbar != null && snackbar.isShown()) return;
         View view = findViewById(R.id.cordLayoutTracker);
         snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
@@ -516,10 +511,10 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+                getRealtimeData();
             }
         });
-       snackbar.show();
+        snackbar.show();
    }
 
     // Get points of bus route

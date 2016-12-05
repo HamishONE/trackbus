@@ -111,10 +111,9 @@ final class Util {
         return dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
-    //Call like this: out = Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE))
-    static boolean isNetworkAvailable(Object systemService) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) systemService;
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    private static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
@@ -210,6 +209,19 @@ final class Util {
 
         resultSet.close();
         myDB.close();
+    }
+
+    static String generateErrorMessage(Context context, int statusCode) {
+
+        if (!isNetworkAvailable(context)) {
+            return "Internet connection interrupted";
+        } else if (statusCode == 0) {
+            return "Network error (no response)";
+        } else if (statusCode >= 500) {
+            return String.format(Locale.US, "Server error (HTTP response %d)", statusCode);
+        } else {
+            return String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
+        }
     }
 
 }
