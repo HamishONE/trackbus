@@ -59,6 +59,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private boolean isVisible = true;
     private String selectedTrip = null;
     private CountDownTimer timer = null;
+    private final Object mySync = new Object();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -232,136 +233,138 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void done(final boolean doReplaceMarkers) {
 
-        final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        Cursor resultSet = myDB.rawQuery("SELECT DISTINCT tbl_name from sqlite_master WHERE tbl_name = 'Routes';", null);
-        boolean doRoutesExist = resultSet.getCount() > 0;
-        resultSet.close();
-        if (!doRoutesExist) {
-            myDB.close();
-            return;
-        }
+        synchronized (mySync) {
 
-        final ArrayList<Marker> tempMarkers;
-        if (doReplaceMarkers) {
-            trip_ids.clear(); //todo: use temp trip_id list
-            tempMarkers = new ArrayList<>();
-        } else {
-            tempMarkers = mainMarkers;
-        }
+            final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+            Cursor resultSet = myDB.rawQuery("SELECT DISTINCT tbl_name from sqlite_master WHERE tbl_name = 'Routes';", null);
+            boolean doRoutesExist = resultSet.getCount() > 0;
+            resultSet.close();
+            if (!doRoutesExist) {
+                myDB.close();
+                return;
+            }
 
-        VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
-        final LatLng upperRight = visibleRegion.farRight;
-        final LatLng lowerLeft = visibleRegion.nearLeft;
+            final ArrayList<Marker> tempMarkers;
+            if (doReplaceMarkers) {
+                trip_ids.clear(); //todo: use temp trip_id list
+                tempMarkers = new ArrayList<>();
+            } else {
+                tempMarkers = mainMarkers;
+            }
 
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
+            VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
+            final LatLng upperRight = visibleRegion.farRight;
+            final LatLng lowerLeft = visibleRegion.nearLeft;
 
-                double minLat = lowerLeft.latitude;
-                double maxLat = upperRight.latitude;
-                double minLon = lowerLeft.longitude;
-                double maxLon = upperRight.longitude;
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
 
-                String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
-                        " Bearings.bearing, LocData.bearing, timestamp, vehicle_id FROM LocData " +
-                        "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
-                        "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
-                        "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
-                        " AND longitude BETWEEN " + minLon + " AND " + maxLon;
-                Cursor resultSet = myDB.rawQuery(sql, null);
+                    double minLat = lowerLeft.latitude;
+                    double maxLat = upperRight.latitude;
+                    double minLon = lowerLeft.longitude;
+                    double maxLon = upperRight.longitude;
 
-                resultSet.moveToFirst();
-                for (int i = 0; i < resultSet.getCount(); i++) {
+                    String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
+                            " Bearings.bearing, LocData.bearing, timestamp, vehicle_id FROM LocData " +
+                            "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
+                            "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
+                            "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
+                            " AND longitude BETWEEN " + minLon + " AND " + maxLon;
+                    Cursor resultSet = myDB.rawQuery(sql, null);
 
-                    SharedPreferences settings = getPreferences(MODE_PRIVATE);
-                    boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
-                    boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
+                    resultSet.moveToFirst();
+                    for (int i = 0; i < resultSet.getCount(); i++) {
 
-                    double latitude = resultSet.getDouble(0);
-                    double longitude = resultSet.getDouble(1);
-                    String start_time = resultSet.getString(2);
-                    final String trip_id = resultSet.getString(3);
-                    final String route = resultSet.getString(4);
-                    int bearing = resultSet.getInt(5);
-                    int bearing_live = resultSet.getInt(6);
-                    final long timestamp = resultSet.getLong(7);
-                    final String vehicle_id = resultSet.getString(8);
+                        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+                        boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
+                        boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
 
-                    if (bearing_live != 0) {
-                        bearing = bearing_live;
-                    }
+                        double latitude = resultSet.getDouble(0);
+                        double longitude = resultSet.getDouble(1);
+                        String start_time = resultSet.getString(2);
+                        final String trip_id = resultSet.getString(3);
+                        final String route = resultSet.getString(4);
+                        int bearing = resultSet.getInt(5);
+                        int bearing_live = resultSet.getInt(6);
+                        final long timestamp = resultSet.getLong(7);
+                        final String vehicle_id = resultSet.getString(8);
 
-                    boolean isTrain = start_time.equals("");
-                    if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && (!showBuses || !isVisible))) {
+                        if (bearing_live != 0) {
+                            bearing = bearing_live;
+                        }
+
+                        boolean isTrain = start_time.equals("");
+                        if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && (!showBuses || !isVisible))) {
+                            resultSet.moveToNext();
+                            continue;
+                        }
+
+                        final MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.title(Util.beautifyRouteName(route));
+                        markerOptions.rotation(bearing);
+                        markerOptions.position(new LatLng(latitude, longitude));
+                        markerOptions.anchor(0.5F, 0.5F);
+
+                        SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
+                        Integer height_dp = setBitmap.height_dp;
+                        Bitmap vehicleBitmap = setBitmap.vehicleBitmap;
+
+                        Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
+                        Canvas canvas = new Canvas(imageBitmap);
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setTextSize((float) (canvas.getDensity() / 6));
+                        paint.setTextAlign(Paint.Align.CENTER);
+                        paint.setTypeface(Typeface.DEFAULT_BOLD);
+
+                        int x = canvas.getWidth() / 2;
+                        int y = canvas.getHeight() / 2;
+                        if (bearing > 180) {
+                            canvas.rotate(90, x, y);
+                        } else {
+                            canvas.rotate(-90, x, y);
+                        }
+
+                        x = (canvas.getWidth() / 2);
+                        y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
+                        canvas.drawText(route, x, y, paint);
+
+                        int width = (int) Util.convertDpToPixel(20, getApplicationContext());
+                        int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
+                        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+                        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+
+                        AllBusesActivity.this.runOnUiThread(new Runnable() {
+                            public void run() {
+                                Marker marker = map.addMarker(markerOptions);
+                                marker.setTag(new Tag(trip_id, route, timestamp));
+                                tempMarkers.add(marker);
+                                trip_ids.add(trip_id);
+
+                                if (trip_id.equals(selectedTrip)) {
+                                    onMarkerClick(marker);
+                                    marker.showInfoWindow();
+                                    selectedTrip = trip_id;
+                                }
+                            }
+                        });
+
                         resultSet.moveToNext();
-                        continue;
                     }
 
-                    final MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.title(Util.beautifyRouteName(route));
-                    markerOptions.rotation(bearing);
-                    markerOptions.position(new LatLng(latitude, longitude));
-                    markerOptions.anchor(0.5F, 0.5F);
-
-                    SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
-                    Integer height_dp = setBitmap.height_dp;
-                    Bitmap vehicleBitmap = setBitmap. vehicleBitmap;
-
-                    Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
-                    Canvas canvas = new Canvas(imageBitmap);
-                    Paint paint = new Paint();
-                    paint.setColor(Color.WHITE);
-                    paint.setTextSize((float) (canvas.getDensity() / 6));
-                    paint.setTextAlign(Paint.Align.CENTER);
-                    paint.setTypeface(Typeface.DEFAULT_BOLD);
-
-                    int x = canvas.getWidth() / 2;
-                    int y = canvas.getHeight() / 2;
-                    if (bearing > 180) {
-                        canvas.rotate(90, x, y);
-                    } else {
-                        canvas.rotate(-90, x, y);
-                    }
-
-                    x = (canvas.getWidth() / 2);
-                    y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
-                    canvas.drawText(route, x, y, paint);
-
-                    int width = (int) Util.convertDpToPixel(20, getApplicationContext());
-                    int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
-                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+                    resultSet.close();
+                    myDB.close();
 
                     AllBusesActivity.this.runOnUiThread(new Runnable() {
                         public void run() {
-                            Marker marker = map.addMarker(markerOptions);
-                            marker.setTag(new Tag(trip_id, route, timestamp));
-                            tempMarkers.add(marker);
-                            trip_ids.add(trip_id);
 
-                            if (trip_id.equals(selectedTrip)) {
-                                onMarkerClick(marker);
-                                marker.showInfoWindow();
-                                selectedTrip = trip_id;
-                            }
-                        }
-                    });
-
-                    resultSet.moveToNext();
-                }
-
-                resultSet.close();
-                myDB.close();
-
-                AllBusesActivity.this.runOnUiThread(new Runnable() {
-                    public void run() {
-
-                        if (doReplaceMarkers) {
-                            for (Marker marker : mainMarkers) {
-                                marker.remove();
-                            }
-                            mainMarkers.clear();
-                            mainMarkers = tempMarkers;
+                            if (doReplaceMarkers) {
+                                for (Marker marker : mainMarkers) {
+                                    marker.remove();
+                                }
+                                mainMarkers.clear();
+                                mainMarkers = tempMarkers;
 
                             /*
                             //todo: make glob null?
@@ -373,14 +376,16 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                                 }
                             }, refreshRate);
                             */
-                        }
+                            }
 
-                        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                    }
-                });
-            }
-        };
-        thread.start();
+                            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                        }
+                    });
+                }
+            };
+            thread.start();
+
+        }
     }
 
     @Override
