@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 interface CombinedApiRequest {
     void done(boolean doReplaceMarkers);
+    void onCombinedApiError(int statusCode);
 }
 
 class CombinedApiBoard {
@@ -158,7 +159,7 @@ class CombinedApiBoard {
             @Override
             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody, Throwable error) {
                 Log.e("HTTP Error", statusCode + " " + error.getMessage());
-                //handleError(statusCode); //todo: do something
+                combinedApiRequest.onCombinedApiError(statusCode);
             }
         });
     }

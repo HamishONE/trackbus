@@ -16,11 +16,13 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,7 +50,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
     private GoogleMap map;
     private RecentStops recentStops;
-    private boolean areRoutesDone = false;
     private CombinedApiBoard combinedApiBoard;
     private GetFerrys getFerrys;
     private GetBearings getBearings;
@@ -231,13 +232,14 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void done(final boolean doReplaceMarkers) {
 
-        if (!areRoutesDone) return;
-
-        /*
-        if (!isVisible) {
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+        Cursor resultSet = myDB.rawQuery("SELECT DISTINCT tbl_name from sqlite_master WHERE tbl_name = 'Routes';", null);
+        boolean doRoutesExist = resultSet.getCount() > 0;
+        resultSet.close();
+        if (!doRoutesExist) {
+            myDB.close();
             return;
-        }*/
+        }
 
         final ArrayList<Marker> tempMarkers;
         if (doReplaceMarkers) {
@@ -260,9 +262,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                 double minLon = lowerLeft.longitude;
                 double maxLon = upperRight.longitude;
 
-                SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
                 String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
-                        " Bearings.bearing, timestamp, vehicle_id FROM LocData " +
+                        " Bearings.bearing, LocData.bearing, timestamp, vehicle_id FROM LocData " +
                         "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
                         "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
                         "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
@@ -282,8 +283,13 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     final String trip_id = resultSet.getString(3);
                     final String route = resultSet.getString(4);
                     int bearing = resultSet.getInt(5);
-                    final long timestamp = resultSet.getLong(6);
-                    final String vehicle_id = resultSet.getString(7);
+                    int bearing_live = resultSet.getInt(6);
+                    final long timestamp = resultSet.getLong(7);
+                    final String vehicle_id = resultSet.getString(8);
+
+                    if (bearing_live != 0) {
+                        bearing = bearing_live;
+                    }
 
                     boolean isTrain = start_time.equals("");
                     if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && (!showBuses || !isVisible))) {
@@ -378,8 +384,24 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     }
 
     @Override
+    public void onCombinedApiError(int statusCode) {
+
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        String message = Util.generateErrorMessage(this, statusCode);
+        View view = findViewById(R.id.cordLayout);
+        Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+        final AllBusesActivity allBusesActivity = this;
+        snackbar.setAction("Retry", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                allBusesActivity.onClick(null);
+            }
+        });
+        snackbar.show();
+    }
+
+    @Override
     public void routesReady() {
-        areRoutesDone = true;
         done(true);
     }
 
