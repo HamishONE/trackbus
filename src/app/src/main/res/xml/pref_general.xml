@@ -18,4 +18,13 @@
         android:positiveButtonText="@null"
         android:title="Use server buffer" />
 
+    <ListPreference
+        android:defaultValue="v2"
+        android:entries="@array/api_version_list"
+        android:entryValues="@array/api_version_list_values"
+        android:key="api_version"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="AT API authentication version" />
+
 </PreferenceScreen>

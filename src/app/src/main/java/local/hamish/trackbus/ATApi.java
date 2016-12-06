@@ -13,9 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 class ATApi {
-
-    private enum API_VERSION {APIv1, APIv2}
-    private static API_VERSION currentApiVersion = API_VERSION.APIv2; //todo:replace with setting;
+    
     private static int drift = 0;
     static int errorCount = 0;
 
@@ -31,9 +29,18 @@ class ATApi {
         departures,
         bearings
     }
-
-    private final static String ATRoot = "https://api.at.govt.nz/v2/";
+    
     private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
+    
+    private static String getATRoot(SharedPreferences settings) {
+        
+        String value = settings.getString("api_version", "v2");
+        if (value.equals("v2")) {
+            return "https://api.at.govt.nz/v2/";
+        } else {
+            return "https://api.at.govt.nz/v1/";
+        }
+    }
 
     static String getUrl(Context context, API api, String param) {
 
@@ -43,13 +50,13 @@ class ATApi {
         if (value.equals("false")) {
             switch (api) {
                 case vehiclelocations:
-                    return ATRoot + "public-restricted/realtime/vehiclelocations/" + getAuthorization();
+                    return getATRoot(settings) + "public-restricted/realtime/vehiclelocations/" + getAuthorization(settings);
                 case tripupdates:
-                    return ATRoot + "public-restricted/realtime/tripUpdates/" + getAuthorization();
+                    return getATRoot(settings) + "public-restricted/realtime/tripUpdates/" + getAuthorization(settings);
                 case realtime:
-                    return ATRoot + "public-restricted/realtime/" + getAuthorization();
+                    return getATRoot(settings) + "public-restricted/realtime/" + getAuthorization(settings);
                 case routes:
-                    return ATRoot + "gtfs/routes" + getAuthorization();
+                    return getATRoot(settings) + "gtfs/routes" + getAuthorization(settings);
                 case ferrys:
                     return "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
             }
@@ -73,15 +80,15 @@ class ATApi {
             // AT direct
             case stopInfo:
                 if (param == null) return null;
-                return ATRoot + "gtfs/stops/stopinfo/" + param + getAuthorization();
+                return getATRoot(settings) + "gtfs/stops/stopinfo/" + param + getAuthorization(settings);
             case shapeByTripId:
                 if (param == null) return null;
-                return ATRoot + "gtfs/shapes/tripId/" + param + getAuthorization();
+                return getATRoot(settings) + "gtfs/shapes/tripId/" + param + getAuthorization(settings);
             case stops:
-                return ATRoot + "gtfs/stops" + getAuthorization();
+                return getATRoot(settings) + "gtfs/stops" + getAuthorization(settings);
             case departures:
                 if (param == null) return null;
-                return ATRoot + "public-restricted/departures/" + param + getAuthorization();
+                return getATRoot(settings) + "public-restricted/departures/" + param + getAuthorization(settings);
         }
 
         return null;
@@ -112,9 +119,11 @@ class ATApi {
     }
 
     // Returns string to append to api call
-    private static String getAuthorization() {
+    private static String getAuthorization(SharedPreferences settings) {
 
-        if (currentApiVersion == API_VERSION.APIv2) {
+        String value = settings.getString("api_version", "v2");
+
+        if (value.equals("v2")) {
 
             final String key = "323741614c1c4b9083299adefe100aa6"; //AT internal
             return "?subscription-key=" + key;
@@ -133,9 +142,7 @@ class ATApi {
 
     // Gets drift global var
     static void getDrift() {
-
-        if (currentApiVersion == API_VERSION.APIv2) return;
-
+        
         final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
         getData("https://api.at.govt.nz/v1/time/epoch?api_key=" + epochKey);
     }

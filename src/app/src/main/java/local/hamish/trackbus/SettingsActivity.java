@@ -51,6 +51,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             bindPreferenceSummaryToValue(findPreference("start_page"));
             bindPreferenceSummaryToValue(findPreference("server_buffer"));
+            bindPreferenceSummaryToValue(findPreference("api_version"));
         }
     }
 
