@@ -10,21 +10,12 @@
         android:title="Open on start" />
 
     <ListPreference
-        android:defaultValue="1"
+        android:defaultValue="false"
         android:entries="@array/server_list"
         android:entryValues="@array/server_list_values"
-        android:key="server_list"
+        android:key="server_buffer"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:title="Server used" />
-
-    <ListPreference
-        android:defaultValue="300"
-        android:entries="@array/interval_list"
-        android:entryValues="@array/interval_list_values"
-        android:key="interval_list"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null"
-        android:title="Time interval" />
+        android:title="Use server buffer" />
 
 </PreferenceScreen>

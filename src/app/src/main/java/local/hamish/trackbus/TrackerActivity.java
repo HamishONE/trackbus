@@ -240,7 +240,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId, tripID));
+        getPointData(ATApi.getUrl(this, ATApi.API.shapeByTripId, tripID));
         getRealtimeData();
     }
 
@@ -465,7 +465,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
     // Get realtime data for trip
     private void getRealtimeData() {
-        String urlString = ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID;
+        String urlString = ATApi.getUrl(this, ATApi.API.realtime, null) + "&tripid=" + tripID;
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

@@ -46,7 +46,7 @@ class AllBusesHelper {
             allTrips += out.get(i).trip + ",";
         }
         Log.e("Num requested: ", String.valueOf(out.size()));
-        getData(ATApi.getUrl(ATApi.API.vehiclelocations, null) + allTrips);
+        getData(ATApi.getUrl(serviceBoardActivity, ATApi.API.vehiclelocations, null) + allTrips);
     }
 
     // Calls the API

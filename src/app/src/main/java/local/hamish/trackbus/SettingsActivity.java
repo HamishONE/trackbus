@@ -49,9 +49,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_general);
             setHasOptionsMenu(true);
 
-            bindPreferenceSummaryToValue(findPreference("server_list"));
-            bindPreferenceSummaryToValue(findPreference("interval_list"));
             bindPreferenceSummaryToValue(findPreference("start_page"));
+            bindPreferenceSummaryToValue(findPreference("server_buffer"));
         }
     }
 

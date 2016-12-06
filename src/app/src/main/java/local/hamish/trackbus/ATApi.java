@@ -1,5 +1,8 @@
 package local.hamish.trackbus;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -32,7 +35,26 @@ class ATApi {
     private final static String ATRoot = "https://api.at.govt.nz/v2/";
     private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
 
-    static String getUrl(API api, String param) {
+    static String getUrl(Context context, API api, String param) {
+
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        String value = settings.getString("server_buffer", "false");
+
+        if (value.equals("false")) {
+            switch (api) {
+                case vehiclelocations:
+                    return ATRoot + "public-restricted/realtime/vehiclelocations/" + getAuthorization();
+                case tripupdates:
+                    return ATRoot + "public-restricted/realtime/tripUpdates/" + getAuthorization();
+                case realtime:
+                    return ATRoot + "public-restricted/realtime/" + getAuthorization();
+                case routes:
+                    return ATRoot + "gtfs/routes" + getAuthorization();
+                case ferrys:
+                    return "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
+            }
+        }
+
         switch (api) {
             // Special
             case bearings:
@@ -61,14 +83,9 @@ class ATApi {
                 if (param == null) return null;
                 return ATRoot + "public-restricted/departures/" + param + getAuthorization();
         }
+
         return null;
     }
-
-    //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
-    //final static String routes = ATRoot + "gtfs/routes";
-    //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
-    //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
-    //final static String realtime = ATRoot + "public-restricted/realtime/";
 
     static boolean isDoubleDecker(String vehicle) {
 

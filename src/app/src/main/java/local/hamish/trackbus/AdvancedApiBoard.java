@@ -40,7 +40,7 @@ class AdvancedApiBoard {
 
     // Get trip data for one stop
     private void getTripData(final boolean isNew) {
-        final String urlString = ATApi.getUrl(ATApi.API.stopInfo, stopID);
+        final String urlString = ATApi.getUrl(serviceBoardActivity, ATApi.API.stopInfo, stopID);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -66,7 +66,7 @@ class AdvancedApiBoard {
 
     // Get all stop data
     private void getStopData() {
-        final String urlString = ATApi.getUrl(ATApi.API.tripupdates, null);
+        final String urlString = ATApi.getUrl(serviceBoardActivity, ATApi.API.tripupdates, null);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
