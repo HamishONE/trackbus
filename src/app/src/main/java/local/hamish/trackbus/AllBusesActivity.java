@@ -22,10 +22,12 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -214,6 +216,37 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         map.setOnMarkerClickListener(this);
         map.setOnInfoWindowCloseListener(this);
         map.setOnInfoWindowLongClickListener(this);
+
+        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+
+                LinearLayout info = new LinearLayout(getApplicationContext());
+                info.setOrientation(LinearLayout.VERTICAL);
+
+                TextView title = new TextView(getApplicationContext());
+                title.setTextColor(Color.BLACK);
+                title.setGravity(Gravity.CENTER);
+                title.setTypeface(null, Typeface.BOLD);
+                title.setText(marker.getTitle());
+
+                TextView snippet = new TextView(getApplicationContext());
+                snippet.setTextColor(Color.GRAY);
+                snippet.setGravity(Gravity.CENTER);
+                snippet.setText(marker.getSnippet());
+
+                info.addView(title);
+                info.addView(snippet);
+
+                return info;
+            }
+        });
     }
 
     @Override
@@ -282,7 +315,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
                         double latitude = resultSet.getDouble(0);
                         double longitude = resultSet.getDouble(1);
-                        String start_time = resultSet.getString(2);
+                        final String start_time = resultSet.getString(2);
                         final String trip_id = resultSet.getString(3);
                         final String route = resultSet.getString(4);
                         int bearing = resultSet.getInt(5);
@@ -338,7 +371,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         AllBusesActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
                                 Marker marker = map.addMarker(markerOptions);
-                                marker.setTag(new Tag(trip_id, route, timestamp));
+                                marker.setTag(new Tag(trip_id, route, timestamp, start_time));
                                 tempMarkers.add(marker);
                                 trip_ids.add(trip_id);
 
@@ -498,6 +531,14 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         done(hasChanged);
     }
 
+    private void updateSnippet(Marker marker, Tag tag) {
+
+        long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+        String start_time = tag.start_time;
+        start_time = (start_time.length() > 0) ? "\nStarted at " + start_time.substring(0, 5) : "";
+        marker.setSnippet(diff + "s ago" + start_time);
+    }
+
     @Override
     public boolean onMarkerClick(final Marker marker) {
 
@@ -505,8 +546,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         if (tag == null) return false;
 
         selectedTrip = tag.trip_id;
-        long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
-        marker.setSnippet(diff + "s ago");
+        updateSnippet(marker, tag);
 
         if (timer != null) timer.cancel();
         timer = new CountDownTimer(1000, 20) {
@@ -520,8 +560,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     timer = null;
                     return;
                 }
-                long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
-                marker.setSnippet(diff + "s ago");
+                updateSnippet(marker, tag);
                 marker.showInfoWindow();
                 timer.start();
             }
@@ -595,11 +634,13 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         String trip_id;
         String route;
         long timestamp;
+        String start_time;
 
-        Tag (String trip_id, String route, long timestamp) {
+        Tag (String trip_id, String route, long timestamp, String start_time) {
             this.trip_id = trip_id;
             this.route = route;
             this.timestamp = timestamp;
+            this.start_time = start_time;
         }
     }
 }
