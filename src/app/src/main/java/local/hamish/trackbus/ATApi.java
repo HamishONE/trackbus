@@ -1,16 +1,19 @@
 package local.hamish.trackbus;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 class ATApi {
-
-    private enum API_VERSION {APIv1, APIv2}
-    private static API_VERSION currentApiVersion = API_VERSION.APIv2; //todo:replace with setting;
+    
     private static int drift = 0;
     static int errorCount = 0;
 
@@ -26,11 +29,39 @@ class ATApi {
         departures,
         bearings
     }
-
-    private final static String ATRoot = "https://api.at.govt.nz/v2/";
+    
     private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
+    
+    private static String getATRoot(SharedPreferences settings) {
+        
+        String value = settings.getString("api_version", "v2");
+        if (value.equals("v2")) {
+            return "https://api.at.govt.nz/v2/";
+        } else {
+            return "https://api.at.govt.nz/v1/";
+        }
+    }
 
-    static String getUrl(API api, String param) {
+    static String getUrl(Context context, API api, String param) {
+
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        String value = settings.getString("server_buffer", "false");
+
+        if (value.equals("false")) {
+            switch (api) {
+                case vehiclelocations:
+                    return getATRoot(settings) + "public-restricted/realtime/vehiclelocations/" + getAuthorization(settings);
+                case tripupdates:
+                    return getATRoot(settings) + "public-restricted/realtime/tripUpdates/" + getAuthorization(settings);
+                case realtime:
+                    return getATRoot(settings) + "public-restricted/realtime/" + getAuthorization(settings);
+                case routes:
+                    return getATRoot(settings) + "gtfs/routes" + getAuthorization(settings);
+                case ferrys:
+                    return "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
+            }
+        }
+
         switch (api) {
             // Special
             case bearings:
@@ -49,35 +80,52 @@ class ATApi {
             // AT direct
             case stopInfo:
                 if (param == null) return null;
-                return ATRoot + "gtfs/stops/stopinfo/" + param + getAuthorization();
+                return getATRoot(settings) + "gtfs/stops/stopinfo/" + param + getAuthorization(settings);
             case shapeByTripId:
                 if (param == null) return null;
-                return ATRoot + "gtfs/shapes/tripId/" + param + getAuthorization();
+                return getATRoot(settings) + "gtfs/shapes/tripId/" + param + getAuthorization(settings);
             case stops:
-                return ATRoot + "gtfs/stops" + getAuthorization();
+                return getATRoot(settings) + "gtfs/stops" + getAuthorization(settings);
             case departures:
                 if (param == null) return null;
-                return ATRoot + "public-restricted/departures/" + param + getAuthorization();
+                return getATRoot(settings) + "public-restricted/departures/" + param + getAuthorization(settings);
         }
+
         return null;
     }
 
-    //final static String ferrys = "https://api.at.govt.nz/v1/api_node/realTime/ferryPositions?callback=lol";
-    //final static String routes = ATRoot + "gtfs/routes";
-    //final static String vehicleLocations = ATRoot + "public-restricted/realtime/vehiclelocations/";
-    //final static String tripUpdates = ATRoot + "public-restricted/realtime/tripUpdates/";
-    //final static String realtime = ATRoot + "public-restricted/realtime/";
+    static boolean isDoubleDecker(String vehicle) {
 
+        // List from: github.com/consindo/dymajo-transit/blob/master/server/realtime.js
+        List<String> doubleDeckers = Arrays.asList(
+
+            // NZ Bus (ADL Enviro500)
+            "3A99", "3A9A", "3A9B", "3A9C", "3A9D", "3A9E", "3A9F",
+            "3AA0", "3AA1", "3AA2", "3AA3", "3AA4", "3AA5", "3AA6",
+            "3AA7", "3AA8", "3AA9", "3AAA", "3AAB", "3AAC", "3AAD",
+            "3AAE", "3AAF",
+
+            // Howick and Eastern (ADL Enviro500)
+            "5FB4", "5FB5", "5FB6", "5FB7", "5FB8", "5FB9", "5FBA",
+            "5FBB", "5FBC", "5FBD", "5FBE", "5FBF", "5FC0", "5FC1",
+            "5FC2",
+
+            // Ritchies/NEX (BCI CityRider FBC6123BRZ)
+            "5622", "5623", "5624", "5625", "5626", "5627", "5628",
+            "5629", "562A", "562B", "562C", "562D", "562E", "562F",
+            "5630"
+        );
+        return doubleDeckers.contains(vehicle);
+    }
 
     // Returns string to append to api call
-    static String getAuthorization() {
+    private static String getAuthorization(SharedPreferences settings) {
 
-        if (currentApiVersion == API_VERSION.APIv2) {
+        String value = settings.getString("api_version", "v2");
 
-            //final String key = "fd2c776a9b0543d9b5e3fba4a2e25576"; //Hamish primary
-            //final String key = "8f65bac859494abf9a8808983a3c8ab5"; //Hamish secondary
+        if (value.equals("v2")) {
+
             final String key = "323741614c1c4b9083299adefe100aa6"; //AT internal
-
             return "?subscription-key=" + key;
 
         } else {
@@ -94,9 +142,7 @@ class ATApi {
 
     // Gets drift global var
     static void getDrift() {
-
-        if (currentApiVersion == API_VERSION.APIv2) return;
-
+        
         final String epochKey = "a471a096baaa08c893f48a909d0ae3d3";
         getData("https://api.at.govt.nz/v1/time/epoch?api_key=" + epochKey);
     }

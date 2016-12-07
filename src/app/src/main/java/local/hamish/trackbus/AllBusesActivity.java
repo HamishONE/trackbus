@@ -11,19 +11,23 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -37,7 +41,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         CombinedApiRequest, RoutesReadyCallback, FerrysReadyCallback, View.OnClickListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback {
+        GoogleMap.OnCameraIdleListener, GoogleMap.OnMarkerClickListener, BearingsReadyCallback, GoogleMap.OnInfoWindowCloseListener,
+        GoogleMap.OnInfoWindowLongClickListener {
 
     private static final String SETTING_SHOW_BUSES = "showBuses";
     private static final String SETTING_SHOW_TRAINS = "showTrains";
@@ -47,7 +52,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
 
     private GoogleMap map;
     private RecentStops recentStops;
-    private boolean areRoutesDone = false;
     private CombinedApiBoard combinedApiBoard;
     private GetFerrys getFerrys;
     private GetBearings getBearings;
@@ -55,6 +59,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     private ArrayList<Marker> ferryMarkers = new ArrayList<>();
     private CopyOnWriteArrayList<String> trip_ids = new CopyOnWriteArrayList<>();
     private boolean isVisible = true;
+    private String selectedTrip = null;
+    private CountDownTimer timer = null;
+    private final Object mySync = new Object();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,6 +214,39 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         map.setOnInfoWindowClickListener(this);
         map.setOnCameraIdleListener(this);
         map.setOnMarkerClickListener(this);
+        map.setOnInfoWindowCloseListener(this);
+        map.setOnInfoWindowLongClickListener(this);
+
+        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+
+                LinearLayout info = new LinearLayout(getApplicationContext());
+                info.setOrientation(LinearLayout.VERTICAL);
+
+                TextView title = new TextView(getApplicationContext());
+                title.setTextColor(Color.BLACK);
+                title.setGravity(Gravity.CENTER);
+                title.setTypeface(null, Typeface.BOLD);
+                title.setText(marker.getTitle());
+
+                TextView snippet = new TextView(getApplicationContext());
+                snippet.setTextColor(Color.GRAY);
+                snippet.setGravity(Gravity.CENTER);
+                snippet.setText(marker.getSnippet());
+
+                info.addView(title);
+                info.addView(snippet);
+
+                return info;
+            }
+        });
     }
 
     @Override
@@ -226,132 +266,138 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     @Override
     public void done(final boolean doReplaceMarkers) {
 
-        if (!areRoutesDone) return;
+        synchronized (mySync) {
 
-        if (!isVisible) {
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-            return;
-        }
+            final SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+            Cursor resultSet = myDB.rawQuery("SELECT DISTINCT tbl_name from sqlite_master WHERE tbl_name = 'Routes';", null);
+            boolean doRoutesExist = resultSet.getCount() > 0;
+            resultSet.close();
+            if (!doRoutesExist) {
+                myDB.close();
+                return;
+            }
 
-        final ArrayList<Marker> tempMarkers;
-        if (doReplaceMarkers) {
-            trip_ids.clear(); //todo: use temp trip_id list
-            tempMarkers = new ArrayList<>();
-        } else {
-            tempMarkers = mainMarkers;
-        }
+            final ArrayList<Marker> tempMarkers;
+            if (doReplaceMarkers) {
+                trip_ids.clear(); //todo: use temp trip_id list
+                tempMarkers = new ArrayList<>();
+            } else {
+                tempMarkers = mainMarkers;
+            }
 
-        VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
-        final LatLng upperRight = visibleRegion.farRight;
-        final LatLng lowerLeft = visibleRegion.nearLeft;
+            VisibleRegion visibleRegion = map.getProjection().getVisibleRegion();
+            final LatLng upperRight = visibleRegion.farRight;
+            final LatLng lowerLeft = visibleRegion.nearLeft;
 
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
 
-                double minLat = lowerLeft.latitude;
-                double maxLat = upperRight.latitude;
-                double minLon = lowerLeft.longitude;
-                double maxLon = upperRight.longitude;
+                    double minLat = lowerLeft.latitude;
+                    double maxLat = upperRight.latitude;
+                    double minLon = lowerLeft.longitude;
+                    double maxLon = upperRight.longitude;
 
-                SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-                String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name, Bearings.bearing, timestamp " +
-                        "FROM LocData " +
-                        "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
-                        "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
-                        "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
-                        " AND longitude BETWEEN " + minLon + " AND " + maxLon;
-                Cursor resultSet = myDB.rawQuery(sql, null);
+                    String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
+                            " Bearings.bearing, LocData.bearing, timestamp, vehicle_id FROM LocData " +
+                            "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
+                            "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
+                            "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
+                            " AND longitude BETWEEN " + minLon + " AND " + maxLon;
+                    Cursor resultSet = myDB.rawQuery(sql, null);
 
-                Bitmap busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
-                Bitmap trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
+                    resultSet.moveToFirst();
+                    for (int i = 0; i < resultSet.getCount(); i++) {
 
-                resultSet.moveToFirst();
-                for (int i = 0; i < resultSet.getCount(); i++) {
+                        SharedPreferences settings = getPreferences(MODE_PRIVATE);
+                        boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
+                        boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
 
-                    SharedPreferences settings = getPreferences(MODE_PRIVATE);
-                    boolean showBuses = settings.getBoolean(SETTING_SHOW_BUSES, true);
-                    boolean showTrains = settings.getBoolean(SETTING_SHOW_TRAINS, true);
+                        double latitude = resultSet.getDouble(0);
+                        double longitude = resultSet.getDouble(1);
+                        final String start_time = resultSet.getString(2);
+                        final String trip_id = resultSet.getString(3);
+                        final String route = resultSet.getString(4);
+                        int bearing = resultSet.getInt(5);
+                        int bearing_live = resultSet.getInt(6);
+                        final long timestamp = resultSet.getLong(7);
+                        final String vehicle_id = resultSet.getString(8);
 
-                    double latitude = resultSet.getDouble(0);
-                    double longitude = resultSet.getDouble(1);
-                    String start_time = resultSet.getString(2);
-                    final String trip_id = resultSet.getString(3);
-                    final String route = resultSet.getString(4);
-                    int bearing = resultSet.getInt(5);
-                    final long timestamp = resultSet.getLong(6);
+                        if (bearing_live != 0) {
+                            bearing = bearing_live;
+                        }
 
-                    boolean isTrain = start_time.equals("");
-                    if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && !showBuses)) {
+                        boolean isTrain = start_time.equals("");
+                        if ((!doReplaceMarkers && trip_ids.contains(trip_id)) || (isTrain && !showTrains) || (!isTrain && (!showBuses || !isVisible))) {
+                            resultSet.moveToNext();
+                            continue;
+                        }
+
+                        final MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.title(Util.beautifyRouteName(route));
+                        markerOptions.rotation(bearing);
+                        markerOptions.position(new LatLng(latitude, longitude));
+                        markerOptions.anchor(0.5F, 0.5F);
+
+                        SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
+                        Integer height_dp = setBitmap.height_dp;
+                        Bitmap vehicleBitmap = setBitmap.vehicleBitmap;
+
+                        Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
+                        Canvas canvas = new Canvas(imageBitmap);
+                        Paint paint = new Paint();
+                        paint.setColor(Color.WHITE);
+                        paint.setTextSize((float) (canvas.getDensity() / 6));
+                        paint.setTextAlign(Paint.Align.CENTER);
+                        paint.setTypeface(Typeface.DEFAULT_BOLD);
+
+                        int x = canvas.getWidth() / 2;
+                        int y = canvas.getHeight() / 2;
+                        if (bearing > 180) {
+                            canvas.rotate(90, x, y);
+                        } else {
+                            canvas.rotate(-90, x, y);
+                        }
+
+                        x = (canvas.getWidth() / 2);
+                        y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
+                        canvas.drawText(route, x, y, paint);
+
+                        int width = (int) Util.convertDpToPixel(20, getApplicationContext());
+                        int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
+                        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+                        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+
+                        AllBusesActivity.this.runOnUiThread(new Runnable() {
+                            public void run() {
+                                Marker marker = map.addMarker(markerOptions);
+                                marker.setTag(new Tag(trip_id, route, timestamp, start_time));
+                                tempMarkers.add(marker);
+                                trip_ids.add(trip_id);
+
+                                if (trip_id.equals(selectedTrip)) {
+                                    onMarkerClick(marker);
+                                    marker.showInfoWindow();
+                                    selectedTrip = trip_id;
+                                }
+                            }
+                        });
+
                         resultSet.moveToNext();
-                        continue;
                     }
 
-                    final MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.title(Util.beautifyRouteName(route));
-                    markerOptions.rotation(bearing);
-                    markerOptions.position(new LatLng(latitude, longitude));
-                    markerOptions.anchor(0.5F, 0.5F);
-
-                    Bitmap vehicleBitmap;
-                    int height_dp;
-                    if (!isTrain) {
-                        vehicleBitmap = busBitmap;
-                        height_dp = 40;
-                    } else {
-                        vehicleBitmap = trainBitmap;
-                        height_dp = 50;
-                    }
-
-                    Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
-                    Canvas canvas = new Canvas(imageBitmap);
-                    Paint paint = new Paint();
-                    paint.setColor(Color.WHITE);
-                    paint.setTextSize((float) (canvas.getDensity() / 6));
-                    paint.setTextAlign(Paint.Align.CENTER);
-                    paint.setTypeface(Typeface.DEFAULT_BOLD);
-
-                    int x = canvas.getWidth() / 2;
-                    int y = canvas.getHeight() / 2;
-                    if (bearing > 180) {
-                        canvas.rotate(90, x, y);
-                    } else {
-                        canvas.rotate(-90, x, y);
-                    }
-
-                    x = (canvas.getWidth() / 2);
-                    y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
-                    canvas.drawText(route, x, y, paint);
-
-                    int width = (int) Util.convertDpToPixel(20, getApplicationContext());
-                    int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
-                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+                    resultSet.close();
+                    myDB.close();
 
                     AllBusesActivity.this.runOnUiThread(new Runnable() {
                         public void run() {
-                            Marker marker = map.addMarker(markerOptions);
-                            marker.setTag(new Tag(trip_id, route, timestamp));
-                            tempMarkers.add(marker);
-                            trip_ids.add(trip_id);
-                        }
-                    });
 
-                    resultSet.moveToNext();
-                }
-
-                resultSet.close();
-                myDB.close();
-
-                AllBusesActivity.this.runOnUiThread(new Runnable() {
-                    public void run() {
-
-                        if (doReplaceMarkers) {
-                            for (Marker marker : mainMarkers) {
-                                marker.remove();
-                            }
-                            mainMarkers.clear();
-                            mainMarkers = tempMarkers;
+                            if (doReplaceMarkers) {
+                                for (Marker marker : mainMarkers) {
+                                    marker.remove();
+                                }
+                                mainMarkers.clear();
+                                mainMarkers = tempMarkers;
 
                             /*
                             //todo: make glob null?
@@ -363,19 +409,37 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                                 }
                             }, refreshRate);
                             */
-                        }
+                            }
 
-                        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                    }
-                });
+                            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                        }
+                    });
+                }
+            };
+            thread.start();
+
+        }
+    }
+
+    @Override
+    public void onCombinedApiError(int statusCode) {
+
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        String message = Util.generateErrorMessage(this, statusCode);
+        View view = findViewById(R.id.cordLayout);
+        Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+        final AllBusesActivity allBusesActivity = this;
+        snackbar.setAction("Retry", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                allBusesActivity.onClick(null);
             }
-        };
-        thread.start();
+        });
+        snackbar.show();
     }
 
     @Override
     public void routesReady() {
-        areRoutesDone = true;
         done(true);
     }
 
@@ -460,31 +524,48 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     public void onCameraIdle() {
 
         float zoom = map.getCameraPosition().zoom;
-        if (zoom < 12) {
-            if (isVisible) {
-                for (Marker marker : mainMarkers) {
-                    marker.setVisible(false);
-                }
-                isVisible = false;
-            }
-        } else {
-            done(false);
-            if (!isVisible) {
-                for (Marker marker : mainMarkers) {
-                    marker.setVisible(true);
-                }
-                isVisible = true;
-            }
-        }
+        boolean isVisible = zoom > 12;
+
+        boolean hasChanged = isVisible != this.isVisible;
+        this.isVisible = isVisible;
+        done(hasChanged);
+    }
+
+    private void updateSnippet(Marker marker, Tag tag) {
+
+        long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+        String start_time = tag.start_time;
+        start_time = (start_time.length() > 0) ? "\nStarted at " + start_time.substring(0, 5) : "";
+        marker.setSnippet(diff + "s ago" + start_time);
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
-        Tag tag = (Tag) marker.getTag();
-        if (tag != null) {
-            long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
-            marker.setSnippet(diff + "s ago");
-        }
+    public boolean onMarkerClick(final Marker marker) {
+
+        final Tag tag = (Tag) marker.getTag();
+        if (tag == null) return false;
+
+        selectedTrip = tag.trip_id;
+        updateSnippet(marker, tag);
+
+        if (timer != null) timer.cancel();
+        timer = new CountDownTimer(1000, 20) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+
+            @Override
+            public void onFinish() {
+                if (!marker.isInfoWindowShown()) {
+                    timer = null;
+                    return;
+                }
+                updateSnippet(marker, tag);
+                marker.showInfoWindow();
+                timer.start();
+            }
+        }.start();
+
         return false; //so that default behaviour occurs
     }
 
@@ -493,16 +574,73 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         //do nothing
     }
 
+    @Override
+    public void onInfoWindowClose(Marker marker) {
+        selectedTrip = null;
+    }
+
+    @Override
+    public void onInfoWindowLongClick(Marker marker) {
+
+        Tag tag = (Tag) marker.getTag();
+        Util.changeFavRoute(this, tag.route);
+        done(true);
+    }
+
+    private Bitmap busBitmap;
+    private Bitmap trainBitmap;
+    private Bitmap ddBitmap;
+    private Bitmap favBusBitmap;
+    private Bitmap favTrainBitmap;
+
+    private class SetBitmap {
+
+        Bitmap vehicleBitmap;
+        int height_dp;
+
+        SetBitmap(boolean isTrain, String route, String vehicle_id) {
+
+            if (busBitmap == null) {
+                busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
+                trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
+                ddBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_brown);
+                favBusBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_red);
+                favTrainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_red);
+            }
+
+            boolean isFav = Util.isFavouriteRoute(getApplicationContext(), route);
+            if (isTrain) {
+                height_dp = 50;
+                if (isFav) {
+                    vehicleBitmap = favTrainBitmap;
+                } else {
+                    vehicleBitmap = trainBitmap;
+                }
+            } else {
+                height_dp = 40;
+                if (isFav) {
+                    vehicleBitmap = favBusBitmap;
+                } else if (ATApi.isDoubleDecker(vehicle_id)) {
+                    vehicleBitmap = ddBitmap;
+                } else {
+                    vehicleBitmap = busBitmap;
+                }
+            }
+        }
+    }
+
     static private class Tag {
 
         String trip_id;
         String route;
         long timestamp;
+        String start_time;
 
-        Tag (String trip_id, String route, long timestamp) {
+        Tag (String trip_id, String route, long timestamp, String start_time) {
             this.trip_id = trip_id;
             this.route = route;
             this.timestamp = timestamp;
+            this.start_time = start_time;
         }
     }
 }

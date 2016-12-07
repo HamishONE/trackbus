@@ -3,10 +3,9 @@
 
     <group android:checkableBehavior="single">
         <item
-        android:id="@+id/go_main"
-        android:icon="@drawable/map_icon"
-        android:title="Find a stop" />
-        <!-- todo: use bus icon -->
+            android:id="@+id/go_main"
+            android:icon="@drawable/map_icon"
+            android:title="Find a stop" />
         <item
             android:id="@+id/go_all_buses"
             android:icon="@drawable/bus_icon"
@@ -15,6 +14,10 @@
             android:id="@+id/go_favs"
             android:icon="@drawable/heart_icon_filled"
             android:title="Favourite stops" />
+        <item
+            android:id="@+id/go_settings"
+            android:icon="@drawable/cog"
+            android:title="@string/settings_label" />
     </group>
 
     <item android:title="Recent Stops">

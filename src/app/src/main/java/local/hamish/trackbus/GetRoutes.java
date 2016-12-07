@@ -1,7 +1,9 @@
 package local.hamish.trackbus;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.provider.Settings;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -26,7 +28,18 @@ class GetRoutes {
     }
 
     void updateData() {
-        getData();
+
+        myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        myDB.execSQL("CREATE TABLE IF NOT EXISTS Meta (id TEXT, value INTEGER);");
+        Cursor resultSet = myDB.rawQuery("SELECT id, value FROM Meta WHERE id = 'routes_last_updated';", null);
+        resultSet.moveToFirst();
+
+        // todo: consider using day change not just 24hrs
+        if (resultSet.getCount() == 0 || (System.currentTimeMillis()/1000 - resultSet.getInt(1)) > 24*60*60) {
+            getData();
+        }
+        resultSet.close();
+        myDB.close();
     }
 
     private void process(JSONObject object) {
@@ -59,6 +72,9 @@ class GetRoutes {
             } catch (JSONException e) { e.printStackTrace(); }
         }
 
+        long timestamp = System.currentTimeMillis()/1000;
+        myDB.execSQL("REPLACE INTO Meta VALUES ('routes_last_updated', " + timestamp + ");");
+
         myDB.setTransactionSuccessful();
         myDB.endTransaction();
         myDB.close();
@@ -66,7 +82,7 @@ class GetRoutes {
     }
 
     private void getData() {
-        final String urlString = ATApi.getUrl(ATApi.API.routes, null);
+        final String urlString = ATApi.getUrl(context, ATApi.API.routes, null);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override

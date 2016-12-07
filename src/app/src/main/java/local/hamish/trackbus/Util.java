@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.ActivityCompat;
@@ -13,6 +15,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -107,22 +111,30 @@ final class Util {
         return dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
-    //Call like this: out = Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE))
-    static boolean isNetworkAvailable(Object systemService) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) systemService;
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    private static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     // Sets up the map the way we like it
-    static void setupMap (Context context ,GoogleMap map) {
+    static void setupMap (Context context, GoogleMap map) {
+
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
         }
+
         map.getUiSettings().setRotateGesturesEnabled(false);
         map.getUiSettings().setMapToolbarEnabled(false);
         map.getUiSettings().setTiltGesturesEnabled(false);
+        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.style_json));
+
+        LatLng northeast = new LatLng(-36.003522, 175.437063);
+        LatLng southwest = new LatLng(-37.703045, 174.273933);
+        LatLngBounds Akl = new LatLngBounds(southwest, northeast);
+        map.setLatLngBoundsForCameraTarget(Akl);
+        map.setMinZoomPreference(8F);
     }
 
     static boolean checkPlayServices(Activity context) {
@@ -164,6 +176,51 @@ final class Util {
                 return "Pukekohe Shuttle";
             default:
                 return "Route " + route;
+        }
+    }
+
+    static boolean isFavouriteRoute(Context context, String routeName) {
+
+        SQLiteDatabase myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
+        Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
+        boolean isFav = resultSet.getCount() > 0;
+        resultSet.close();
+        myDB.close();
+        return isFav;
+    }
+
+    // Adds or removes route from database and array and redraws list
+    static void changeFavRoute(Context context, String route) {
+
+        // Query table for selected route
+        SQLiteDatabase myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
+        Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + route + "'", null);
+        resultSet.moveToFirst();
+
+        // Check if route already exists
+        if (resultSet.getCount() == 0) {
+            // If not add entry
+            myDB.execSQL("INSERT INTO FavRoutes VALUES('" + route + "');");
+        } else {
+            // If so remove entry
+            myDB.execSQL("DELETE FROM FavRoutes WHERE route='" + route + "';");
+        }
+
+        resultSet.close();
+        myDB.close();
+    }
+
+    static String generateErrorMessage(Context context, int statusCode) {
+
+        if (!isNetworkAvailable(context)) {
+            return "Internet connection interrupted";
+        } else if (statusCode == 0) {
+            return "Network error (no response)";
+        } else if (statusCode >= 500) {
+            return String.format(Locale.US, "Server error (HTTP response %d)", statusCode);
+        } else {
+            return String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
         }
     }
 

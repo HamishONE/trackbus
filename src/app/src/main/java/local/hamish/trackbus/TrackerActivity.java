@@ -240,17 +240,22 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     // Calls APIs
     private void callApi() {
 
-        getPointData(ATApi.getUrl(ATApi.API.shapeByTripId, tripID));
-        getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+        getPointData(ATApi.getUrl(this, ATApi.API.shapeByTripId, tripID));
+        getRealtimeData();
     }
 
     private void updateTimestamp() {
 
         int secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
-        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
+        String timestamp;
+        if (secsAgo < 100) {
+            timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
+        } else {
+            timestamp = String.format(Locale.US, "%2d' ago", secsAgo/60);
+        }
         tvTimestamp.setText(timestamp);
 
-        timer.start();
+        if (timer != null) timer.start();
     }
 
     // Calls the API regularly and redraws map
@@ -260,6 +265,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
         // Remove loading bar
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        findViewById(R.id.loadingPanelSmall).setVisibility(View.INVISIBLE);
 
         double lat2 = 0.0;
         double long2 = 0.0;
@@ -307,8 +313,6 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             }
 
             lastTimestamp = locDict.getJSONObject("vehicle").getInt("timestamp");
-            secsAgo = (int) (new Date().getTime() / 1000) - lastTimestamp;
-
             isTrain = !locDict.getJSONObject("vehicle").getJSONObject("trip").has("start_time");
 
         } catch (JSONException e) {e.printStackTrace();}
@@ -332,9 +336,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         String notiText = "";
 
         // Set timestamp header
-        String timestamp = String.format(Locale.US, "%2ds ago", secsAgo);
-        tvTimestamp.setText(timestamp);
-        notiText += timestamp + "\n";
+        updateTimestamp();
+        //notiText += timestamp + "\n";
 
         if (timer == null) {
             timer = new CountDownTimer(1000, 20) {
@@ -405,7 +408,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+                findViewById(R.id.loadingPanelSmall).setVisibility(View.VISIBLE);
+                getRealtimeData();
             }
         }, timeDelay);
     }
@@ -460,7 +464,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     }
 
     // Get realtime data for trip
-    private void getRealtimeData(String urlString) {
+    private void getRealtimeData() {
+        String urlString = ATApi.getUrl(this, ATApi.API.realtime, null) + "&tripid=" + tripID;
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -496,15 +501,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (statusCode == -5) message = "JSON parsing error"; //todo: expand to other copies
-        else if (!Util.isNetworkAvailable(getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
-        // Show snackbar
+
+        String message = Util.generateErrorMessage(this, statusCode);
+
         if (snackbar != null && snackbar.isShown()) return;
         View view = findViewById(R.id.cordLayoutTracker);
         snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
@@ -512,10 +511,10 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData(ATApi.getUrl(ATApi.API.realtime, null) + "&tripid=" + tripID);
+                getRealtimeData();
             }
         });
-       snackbar.show();
+        snackbar.show();
    }
 
     // Get points of bus route

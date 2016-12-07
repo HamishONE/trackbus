@@ -1,0 +1,30 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="find_a_stop"
+        android:entries="@array/start_page_list"
+        android:entryValues="@array/start_page_list_values"
+        android:key="start_page"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="Open on start" />
+
+    <ListPreference
+        android:defaultValue="false"
+        android:entries="@array/server_list"
+        android:entryValues="@array/server_list_values"
+        android:key="server_buffer"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="Use server buffer" />
+
+    <ListPreference
+        android:defaultValue="v2"
+        android:entries="@array/api_version_list"
+        android:entryValues="@array/api_version_list_values"
+        android:key="api_version"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="AT API authentication version" />
+
+</PreferenceScreen>

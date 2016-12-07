@@ -40,7 +40,7 @@ class AdvancedApiBoard {
 
     // Get trip data for one stop
     private void getTripData(final boolean isNew) {
-        final String urlString = ATApi.getUrl(ATApi.API.stopInfo, stopID);
+        final String urlString = ATApi.getUrl(serviceBoardActivity, ATApi.API.stopInfo, stopID);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -66,7 +66,7 @@ class AdvancedApiBoard {
 
     // Get all stop data
     private void getStopData() {
-        final String urlString = ATApi.getUrl(ATApi.API.tripupdates, null);
+        final String urlString = ATApi.getUrl(serviceBoardActivity, ATApi.API.tripupdates, null);
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -106,6 +106,7 @@ class AdvancedApiBoard {
         String schTimeStr;
         GregorianCalendar schTime;
         int delay;
+        String vehicle_id;
 
         out.clear();
 
@@ -113,6 +114,7 @@ class AdvancedApiBoard {
         for (int i = 0; i < tripData.length(); i++) {
 
             OutputItem item = new OutputItem();
+            vehicle_id = null;
 
             try {
                 // Extract key trip data
@@ -169,6 +171,8 @@ class AdvancedApiBoard {
                             stopsAway = stopSeq - stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update").getInt("stop_sequence");
                             if (stopsAway < 0) continue; //Skips to next iteration
 
+                            vehicle_id = stopDict.getJSONObject("trip_update").getJSONObject("vehicle").getString("id");
+
                             // Find delay
                             try {
                                 delay = stopDict.getJSONObject("trip_update").getJSONObject("stop_time_update").getJSONObject("departure").getInt("delay");
@@ -194,7 +198,7 @@ class AdvancedApiBoard {
                 } else {
 
                     // Add to arrays
-                    item.stopSequence = 100;
+                    item.stopSequence = 100; //todo: fix this!
 
                     if (schTime.after(GregorianCalendar.getInstance())) {
                         // Make strings blank
@@ -224,6 +228,7 @@ class AdvancedApiBoard {
                 item.headsign = destination;
                 item.dueTime = dueStr;
                 item.dateScheduled = schTime.getTimeInMillis() / 1000;
+                item.vehicle_id = vehicle_id;
                 out.add(item);
 
             } catch (JSONException e) {e.printStackTrace();}
@@ -267,6 +272,7 @@ class AdvancedApiBoard {
         boolean isTerminating;
         boolean isScheduled;
         long dateScheduled;
+        String vehicle_id;
     }
 
     // Show snackbar and allow refreshing on HTTP failure
@@ -280,13 +286,9 @@ class AdvancedApiBoard {
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
+
+        String message = Util.generateErrorMessage(serviceBoardActivity, statusCode);
+
         // Show snackbar
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);

@@ -28,7 +28,6 @@ class AllBusesHelper {
     private boolean firstCall = true;
     private ServiceBoardActivity serviceBoardActivity;
     private View circle;
-    private FavouritesHelper favouritesHelper;
     private HashMap<Marker, Integer> mHashMap = new HashMap<>();
 
     // Constructor
@@ -36,8 +35,6 @@ class AllBusesHelper {
         this.serviceBoardActivity = serviceBoardActivity;
         this.map = map;
         this.circle = circle;
-        favouritesHelper = new FavouritesHelper(serviceBoardActivity);
-
         this.out = serviceBoardActivity.out;
     }
 
@@ -49,7 +46,7 @@ class AllBusesHelper {
             allTrips += out.get(i).trip + ",";
         }
         Log.e("Num requested: ", String.valueOf(out.size()));
-        getData(ATApi.getUrl(ATApi.API.vehiclelocations, null) + allTrips);
+        getData(ATApi.getUrl(serviceBoardActivity, ATApi.API.vehiclelocations, null) + allTrips);
     }
 
     // Calls the API
@@ -115,7 +112,7 @@ class AllBusesHelper {
                         }
 
                         Marker marker;
-                        if (favouritesHelper.isFavRoute(out.get(i).route)) {
+                        if (Util.isFavouriteRoute(serviceBoardActivity, out.get(i).route)) {
                             marker =  map.addMarker(new MarkerOptions().position(latLng).title(out.get(i).route)
                                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                                     //.icon(BitmapDescriptorFactory.fromResource(R.drawable.heart_icon_pink)));
@@ -154,20 +151,16 @@ class AllBusesHelper {
 
     // Show snackbar and allow refreshing on HTTP failure
     void handleError(int statusCode) {
+
         View circle = serviceBoardActivity.findViewById(R.id.loadingPanelMap);
         if (circle == null) {
             Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
             return;
         }
         circle.setVisibility(View.GONE);
-        // Prepare message for snackbar
-        String message;
-        if (!Util.isNetworkAvailable(serviceBoardActivity.getSystemService(Context.CONNECTIVITY_SERVICE)))
-            message = "Please connect to the internet";
-        else if (statusCode == 0) message = "Network error (no response)";
-        else if (statusCode >= 500) message = String.format(Locale.US, "AT server error (HTTP response %d)", statusCode);
-        else message = String.format(Locale.US, "Network error (HTTP response %d)", statusCode);
-        // Show snackbar
+
+        String message = Util.generateErrorMessage(serviceBoardActivity, statusCode);
+
         if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
         View view = serviceBoardActivity.findViewById(R.id.cordLayout);
         serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
