@@ -227,6 +227,9 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             @Override
             public View getInfoContents(Marker marker) {
 
+                Tag tag = (Tag) marker.getTag();
+                selectedTrip = tag.trip_id;
+
                 LinearLayout info = new LinearLayout(getApplicationContext());
                 info.setOrientation(LinearLayout.VERTICAL);
 
@@ -235,14 +238,23 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                 title.setGravity(Gravity.CENTER);
                 title.setTypeface(null, Typeface.BOLD);
                 title.setText(marker.getTitle());
-
-                TextView snippet = new TextView(getApplicationContext());
-                snippet.setTextColor(Color.GRAY);
-                snippet.setGravity(Gravity.CENTER);
-                snippet.setText(marker.getSnippet());
-
                 info.addView(title);
-                info.addView(snippet);
+
+                long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
+                TextView secsAgo = new TextView(getApplicationContext());
+                secsAgo.setTextColor(Color.GRAY);
+                secsAgo.setGravity(Gravity.CENTER);
+                secsAgo.setText(diff + "s ago");
+                info.addView(secsAgo);
+
+                String start_time = tag.start_time;
+                if (start_time.length() > 0) {
+                    TextView startTime = new TextView(getApplicationContext());
+                    startTime.setTextColor(Color.GRAY);
+                    startTime.setGravity(Gravity.CENTER);
+                    startTime.setText("Started at " + start_time.substring(0, 5));
+                    info.addView(startTime);
+                }
 
                 return info;
             }
@@ -338,6 +350,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         markerOptions.rotation(bearing);
                         markerOptions.position(new LatLng(latitude, longitude));
                         markerOptions.anchor(0.5F, 0.5F);
+                        markerOptions.infoWindowAnchor(0.5F, 0.5F);
 
                         SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
                         Integer height_dp = setBitmap.height_dp;
@@ -531,22 +544,8 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         done(hasChanged);
     }
 
-    private void updateSnippet(Marker marker, Tag tag) {
-
-        long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
-        String start_time = tag.start_time;
-        start_time = (start_time.length() > 0) ? "\nStarted at " + start_time.substring(0, 5) : "";
-        marker.setSnippet(diff + "s ago" + start_time);
-    }
-
     @Override
     public boolean onMarkerClick(final Marker marker) {
-
-        final Tag tag = (Tag) marker.getTag();
-        if (tag == null) return false;
-
-        selectedTrip = tag.trip_id;
-        updateSnippet(marker, tag);
 
         if (timer != null) timer.cancel();
         timer = new CountDownTimer(1000, 20) {
@@ -560,7 +559,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     timer = null;
                     return;
                 }
-                updateSnippet(marker, tag);
                 marker.showInfoWindow();
                 timer.start();
             }
