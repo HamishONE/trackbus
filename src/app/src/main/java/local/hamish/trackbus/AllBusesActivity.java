@@ -22,6 +22,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -228,29 +229,56 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             public View getInfoContents(Marker marker) {
 
                 Tag tag = (Tag) marker.getTag();
+                if (tag == null) return null;
                 selectedTrip = tag.trip_id;
+
+                DisplayMetrics displaymetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+                int width = (int) (displaymetrics.widthPixels*0.55);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, LinearLayout.LayoutParams.WRAP_CONTENT);
 
                 LinearLayout info = new LinearLayout(getApplicationContext());
                 info.setOrientation(LinearLayout.VERTICAL);
+                info.setLayoutParams(lp);
+
+                LinearLayout top = new LinearLayout(getApplicationContext());
+                top.setOrientation(LinearLayout.HORIZONTAL);
+                info.setLayoutParams(lp);
+
+                int padding = (int) Util.convertDpToPixel(7, getApplicationContext());
 
                 TextView title = new TextView(getApplicationContext());
                 title.setTextColor(Color.BLACK);
-                title.setGravity(Gravity.CENTER);
+                title.setGravity(Gravity.RIGHT);
+                title.setPadding(0, 0, padding, 0);
                 title.setTypeface(null, Typeface.BOLD);
                 title.setText(marker.getTitle());
-                info.addView(title);
+                title.setWidth(width*3/5);
 
                 long diff = System.currentTimeMillis() / 1000 - tag.timestamp;
                 TextView secsAgo = new TextView(getApplicationContext());
-                secsAgo.setTextColor(Color.GRAY);
-                secsAgo.setGravity(Gravity.CENTER);
+                secsAgo.setTextColor(Color.BLACK);
+                secsAgo.setGravity(Gravity.LEFT);
+                secsAgo.setPadding(padding, 0, 0, 0);
                 secsAgo.setText(diff + "s ago");
-                info.addView(secsAgo);
+                secsAgo.setWidth(width*2/5);
+
+                TextView routeLongName = new TextView(getApplicationContext());
+                routeLongName.setTextColor(Color.GRAY);
+                routeLongName.setGravity(Gravity.CENTER);
+                routeLongName.setText(tag.route_long_name);
+                routeLongName.setTypeface(null, Typeface.ITALIC);
+                //routeLongName.setMaxWidth(width);
+
+                top.addView(title);
+                top.addView(secsAgo);
+                info.addView(top);
+                info.addView(routeLongName);
 
                 String start_time = tag.start_time;
                 if (start_time.length() > 0) {
                     TextView startTime = new TextView(getApplicationContext());
-                    startTime.setTextColor(Color.GRAY);
+                    startTime.setTextColor(Color.BLACK);
                     startTime.setGravity(Gravity.CENTER);
                     startTime.setText("Started at " + start_time.substring(0, 5));
                     info.addView(startTime);
@@ -311,7 +339,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     double maxLon = upperRight.longitude;
 
                     String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
-                            " Bearings.bearing, LocData.bearing, timestamp, vehicle_id FROM LocData " +
+                            " Bearings.bearing, LocData.bearing, timestamp, vehicle_id, route_long_name FROM LocData " +
                             "INNER JOIN Routes ON LocData.route_id = Routes.route_id " +
                             "LEFT JOIN Bearings ON LocData.trip_id = Bearings.trip_id " +
                             "WHERE latitude BETWEEN " + minLat + " AND " + maxLat +
@@ -334,6 +362,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         int bearing_live = resultSet.getInt(6);
                         final long timestamp = resultSet.getLong(7);
                         final String vehicle_id = resultSet.getString(8);
+                        final String route_long_name = resultSet.getString(9);
 
                         if (bearing_live != 0) {
                             bearing = bearing_live;
@@ -384,7 +413,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         AllBusesActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
                                 Marker marker = map.addMarker(markerOptions);
-                                marker.setTag(new Tag(trip_id, route, timestamp, start_time));
+                                marker.setTag(new Tag(trip_id, route, timestamp, start_time, route_long_name));
                                 tempMarkers.add(marker);
                                 trip_ids.add(trip_id);
 
@@ -633,12 +662,14 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         String route;
         long timestamp;
         String start_time;
+        String route_long_name;
 
-        Tag (String trip_id, String route, long timestamp, String start_time) {
+        Tag (String trip_id, String route, long timestamp, String start_time, String route_long_name) {
             this.trip_id = trip_id;
             this.route = route;
             this.timestamp = timestamp;
             this.start_time = start_time;
+            this.route_long_name = route_long_name;
         }
     }
 }
