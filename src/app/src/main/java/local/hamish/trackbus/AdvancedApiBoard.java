@@ -96,25 +96,22 @@ class AdvancedApiBoard {
         if (tripData == null) return;
         boolean incStops = !(stopData == null);
 
-        int stopsAway;
-        String stopsAwayStr = "";
-        String dueStr = "";
-        String route;
-        String tripDataTrip;
-        String destination ;
-        int stopSeq;
-        String schTimeStr;
-        GregorianCalendar schTime;
-        int delay;
-        String vehicle_id;
-
         out.clear();
 
         // Loop through all bus trips
         for (int i = 0; i < tripData.length(); i++) {
 
-            OutputItem item = new OutputItem();
-            vehicle_id = null;
+            int stopsAway;
+            String stopsAwayStr = "";
+            String dueStr = "";
+            String route;
+            String tripDataTrip;
+            String destination ;
+            int stopSeq;
+            String schTimeStr;
+            GregorianCalendar schTime;
+            int delay;
+            String vehicle_id = null;
 
             try {
                 // Extract key trip data
@@ -184,9 +181,6 @@ class AdvancedApiBoard {
                             double dueTime = schTime.getTimeInMillis() / 1000 + delay;
                             double dueSecs = dueTime - (new Date().getTime() / 1000);
 
-                            // Add to arrays
-                            item.stopSequence = stopSeq;
-
                             // Format numbers
                             dueStr = String.format(Locale.US, "%+.0f:%02.0f", (dueSecs / 60), Math.abs(dueSecs % 60));
                             stopsAwayStr = stopsAway + "";
@@ -197,9 +191,6 @@ class AdvancedApiBoard {
 
                 } else {
 
-                    // Add to arrays
-                    item.stopSequence = 100; //todo: fix this!
-
                     if (schTime.after(GregorianCalendar.getInstance())) {
                         // Make strings blank
                         stopsAwayStr = "";
@@ -208,6 +199,8 @@ class AdvancedApiBoard {
                         continue; //Skips to next iteration
                     }
                 }
+
+                OutputItem item = new OutputItem();
 
                 // Check for terminating or scheduled service
                 item.isScheduled = false;
@@ -229,6 +222,7 @@ class AdvancedApiBoard {
                 item.dueTime = dueStr;
                 item.dateScheduled = schTime.getTimeInMillis() / 1000;
                 item.vehicle_id = vehicle_id;
+                item.stopSequence = stopSeq;
                 out.add(item);
 
             } catch (JSONException e) {e.printStackTrace();}
