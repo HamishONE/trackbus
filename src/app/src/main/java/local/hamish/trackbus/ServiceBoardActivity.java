@@ -2,6 +2,7 @@ package local.hamish.trackbus;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -26,6 +27,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -37,6 +39,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
@@ -589,12 +592,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     }
 
     // Sets up old api tab
-    public static class OldBoardFragment extends Fragment {
+    public static class OldBoardFragment extends Fragment implements View.OnClickListener {
         public static final String ARG_OBJECT = "object";
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_old_api, container, false);
+            final View rootView = inflater.inflate(R.layout.fragment_old_api, container, false);
             //Bundle args = getArguments();
 
             // Change column header to pier/platform as appropriate
@@ -618,7 +621,29 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             swipeLayout.setColorSchemeColors(0xFF0000FF, 0xFFFF0000); // Red + Blue (full alpha)
             */
 
+            RelativeLayout rl = (RelativeLayout) rootView.findViewById(R.id.layout_history_selector);
+            rl.setOnClickListener(this);
+
             return rootView;
+        }
+
+        @Override
+        public void onClick(final View view) {
+
+            final CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
+            CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Select timeframe");
+            builder.setItems(longNames, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    TextView tv = (TextView) view.findViewById(R.id.tv_history_selector);
+                    tv.setText(shortNames[which]);
+                }
+            });
+            builder.show();
         }
     }
 

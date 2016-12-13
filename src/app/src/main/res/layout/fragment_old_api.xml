@@ -105,4 +105,25 @@
 
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/layout_history_selector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:padding="10dp"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:paddingStart="30dp"
+        android:paddingEnd="30dp"
+        android:background="@color/common_action_bar_splitter" >
+
+        <TextView
+            android:id="@+id/tv_history_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:text="Live" />
+
+    </RelativeLayout>
+
 </android.support.design.widget.CoordinatorLayout>
