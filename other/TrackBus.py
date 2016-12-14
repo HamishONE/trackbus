@@ -4,7 +4,7 @@
 ### AT Bus Tracker by Hamish O'Neill ###
 ########################################
 
-# WARNING: This program was created in early 2015 for the simple purpose of figuring out
+# WARNING: This program was created in early 2016 for the simple purpose of figuring out
 # how to use the Auckland Transport APIs (which at that time were not fully public). The 
 # Android app initially drew from here, but it has NOT been maintained along with the Java 
 # code equivalent. It's only useful purpose would be as a learning exercise. Beware bugs!
