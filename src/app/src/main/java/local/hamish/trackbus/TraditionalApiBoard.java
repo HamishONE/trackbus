@@ -1,9 +1,6 @@
 package local.hamish.trackbus;
 
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
-import android.view.View;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import org.json.JSONArray;
@@ -15,22 +12,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
-class TraditionalApiBoard {
+class TraditionalApiBoard extends OldBoardParent {
 
-    ArrayList<Items> items;
-    boolean active = true;
-
-    private ServiceBoardActivity serviceBoardActivity;
     private JSONArray boardData = null;
-    private String stopID;
 
-    // Constructor
     TraditionalApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID) {
-        this.serviceBoardActivity = serviceBoardActivity;
-        this.stopID = stopID;
+        super(serviceBoardActivity, stopID);
     }
 
     // Refreshes all data
+    @Override
     void updateData() {
         getBoardData(ATApi.getUrl(serviceBoardActivity, ATApi.API.departures, stopID));
     }
@@ -115,47 +106,6 @@ class TraditionalApiBoard {
             if (active) serviceBoardActivity.produceViewOld();
             e.printStackTrace();
         }
-    }
-
-    // To store output data
-    class Items implements Comparable<Items> {
-        String route;
-        String headsign;
-        String scheduled;
-        String dueTime;
-        String platform;
-        Date scheduledDate;
-
-        // Constructor sets all scheduled times to well into the future
-        Items() {
-            scheduledDate = new Date(Long.MAX_VALUE);
-        }
-
-        @Override // Allows sorting by scheduled times
-        public int compareTo(@NonNull Items o) {
-            return scheduledDate.compareTo(o.scheduledDate);
-        }
-    }
-
-    // Show snackbar and allow refreshing on HTTP failure
-    private void handleError(int statusCode) {
-        View circle = serviceBoardActivity.findViewById(R.id.loadingPanelOld);
-        if (circle == null) {
-            Log.e("Early exit", "from handleError in AdvancedApiBoard_private_api class");
-            return;
-        }
-        circle.setVisibility(View.GONE);
-
-        String message = Util.generateErrorMessage(serviceBoardActivity, statusCode);
-
-        if (serviceBoardActivity.snackbar != null && serviceBoardActivity.snackbar.isShown()) return;
-        View view = serviceBoardActivity.findViewById(R.id.cordLayout);
-        serviceBoardActivity.snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
-        serviceBoardActivity.snackbar.setAction("Retry", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {serviceBoardActivity.updateData(true);}
-        });
-        serviceBoardActivity.snackbar.show();
     }
 
 }

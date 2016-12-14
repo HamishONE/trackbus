@@ -27,7 +27,8 @@ class ATApi {
         shapeByTripId,
         stops,
         departures,
-        bearings
+        bearings,
+        scheduled
     }
     
     private final static String HamishRoot = "http://hamishserver.ddns.net/buffer?api=";
@@ -66,6 +67,8 @@ class ATApi {
             // Special
             case bearings:
                 return "http://hamishserver.ddns.net/buffer/bearings.php";
+            case scheduled:
+                return "http://hamishserver.ddns.net/timetable/api.php";
             // Server buffer
             case vehiclelocations:
                 return HamishRoot + "vehiclelocations";

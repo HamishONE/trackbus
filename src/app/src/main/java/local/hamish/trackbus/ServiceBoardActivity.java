@@ -68,7 +68,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     // Helper objects
     private AdvancedApiBoard newApiBoard;
-    private TraditionalApiBoard oldApiBoard;
+    private OldBoardParent oldApiBoard;
     public AllBusesHelper allBusesHelper;
     public ArrayList<AdvancedApiBoard.OutputItem> out = new ArrayList<>();
 
@@ -340,6 +340,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
     // Produces the list view and waits for click
     public void produceViewOld() {
+
+        if (oldApiBoard.items == null) return;
 
         if (Util.findStopType(stopName) != Util.StopType.BUS) {
             Collections.sort(oldApiBoard.items);
@@ -626,11 +628,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             return rootView;
         }
 
+        enum choice {LIVE, TODAY, TOMORROW, DATE};
+        CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
+        CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
+
         @Override
         public void onClick(final View view) {
-
-            final CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
-            CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle("Select timeframe");
@@ -638,8 +641,22 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
 
+                    ServiceBoardActivity base = (ServiceBoardActivity) getActivity();
                     TextView tv = (TextView) view.findViewById(R.id.tv_history_selector);
                     tv.setText(shortNames[which]);
+
+                    switch (choice.values()[which]) {
+                        case LIVE:
+                            base.oldApiBoard = new TraditionalApiBoard(base, base.stopID);
+                            break;
+                        case TODAY:
+                            base.oldApiBoard = new ScheduledApiBoard(base, base.stopID, "20161214");
+                            break;
+                        case TOMORROW:
+                            base.oldApiBoard = new ScheduledApiBoard(base, base.stopID, "20161218");
+                            break;
+                    }
+                    base.updateData(false);
                 }
             });
             builder.show();
