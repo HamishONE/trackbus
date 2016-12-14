@@ -222,15 +222,15 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             String name = stops[i][3];
 
             switch (Util.findStopType(name)) {
-                case 0: // Bus
+                case BUS:
                     stopMarkers[len + i] =  map.addMarker(new MarkerOptions().position(latLng).snippet(name).title(stopID)
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
                     break;
-                case 1: // Train
+                case TRAIN:
                     stopMarkers[len + i] =  map.addMarker(new MarkerOptions().position(latLng).snippet(name).title(stopID)
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                     break;
-                case 2: // Ferry
+                case FERRY:
                     stopMarkers[len + i] =  map.addMarker(new MarkerOptions().position(latLng).snippet(name).title(stopID)
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
             }

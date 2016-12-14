@@ -1,6 +1,5 @@
 package local.hamish.trackbus;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -12,13 +11,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 class TraditionalApiBoard {
 
-    Items[] items = new Items[1000];
-    int count = 0;
+    ArrayList<Items> items;
     boolean active = true;
 
     private ServiceBoardActivity serviceBoardActivity;
@@ -29,24 +28,22 @@ class TraditionalApiBoard {
     TraditionalApiBoard(ServiceBoardActivity serviceBoardActivity, String stopID) {
         this.serviceBoardActivity = serviceBoardActivity;
         this.stopID = stopID;
-
-        // Initialise output array
-        for (int i=0; i< items.length; i++) {
-            items[i] = new Items();
-        }
     }
 
-    // Call API
-    void callAPI() {
+    // Refreshes all data
+    void updateData() {
         getBoardData(ATApi.getUrl(serviceBoardActivity, ATApi.API.departures, stopID));
     }
 
     // Continues with code after network responds
     private void produceBoard() {
+
+        ArrayList<Items> items_temp = new ArrayList<>();
+
         for (int i=0; i < boardData.length(); i++) {
             try {
                 // Export relevant maxxData
-                boolean isReal = boardData.getJSONObject(i).getBoolean("monitored");
+                boolean isMonitored = boardData.getJSONObject(i).getBoolean("monitored");
                 String route = boardData.getJSONObject(i).getString("route_short_name");
                 String sign = boardData.getJSONObject(i).getString("destinationDisplay");
                 String actual = boardData.getJSONObject(i).getString("expectedDepartureTime");
@@ -59,23 +56,30 @@ class TraditionalApiBoard {
                 String schStr = df.format(schTime);
 
                 // Add general data to arrays
-                items[count].route = route;
-                items[count].headsign = sign;
-                items[count].scheduled = schStr;
-                items[count].scheduledDate = schTime;
-                items[count].platform = platform;
+                Items item = new Items();
+                item.route = route;
+                item.headsign = sign;
+                item.scheduled = schStr;
+                item.scheduledDate = schTime;
+                item.platform = platform;
 
                 //Check if actual due time
-                if (isReal && !actual.equals("null")) {
+                if (isMonitored && !actual.equals("null")) {
                     // Calculate due time and add to array
                     double dblActual = cleanTime(actual).getTime() - (new Date().getTime());
                     dblActual /= 1000*60;
-                    items[count].dueTime = String.valueOf(Math.round(dblActual));
+                    item.dueTime = String.valueOf(Math.round(dblActual));
                 }
-                count++;
+
+                items_temp.add(item);
             } catch (JSONException e) {e.printStackTrace();}
         }
-        if (active) serviceBoardActivity.produceViewOld();
+
+        items = items_temp;
+
+        if (active) {
+            serviceBoardActivity.produceViewOld();
+        }
     }
 
     // Get trip data for one stop
@@ -113,13 +117,6 @@ class TraditionalApiBoard {
         }
     }
 
-    // Refreshes all data
-    void updateData() {
-        boardData = null;
-        count = 0;
-        callAPI();
-    }
-
     // To store output data
     class Items implements Comparable<Items> {
         String route;
@@ -129,7 +126,7 @@ class TraditionalApiBoard {
         String platform;
         Date scheduledDate;
 
-        // Constructor sets all scheduled times to the epoch
+        // Constructor sets all scheduled times to well into the future
         Items() {
             scheduledDate = new Date(Long.MAX_VALUE);
         }

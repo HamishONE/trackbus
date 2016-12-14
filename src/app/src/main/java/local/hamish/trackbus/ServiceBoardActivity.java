@@ -52,6 +52,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.nullwire.trace.ExceptionHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -124,7 +125,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             }
         });
 
-        if (Util.findStopType(stopName) == 0) {
+        if (Util.findStopType(stopName) == Util.StopType.BUS) {
             mViewPager.setCurrentItem(1, false); // Show new data first for buses
         } else {
             mViewPager.setCurrentItem(0, false); // Show old data first for train/ferry
@@ -140,16 +141,13 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         // Read terminating visibility
         SharedPreferences settings = getPreferences(MODE_PRIVATE);
         showTerminating = settings.getBoolean("showTerminating", false);
-        boolean useMaxx = settings.getBoolean("useMaxx", false);
 
         //newApiBoard = new AdvancedApiBoard_private_api(this, stopID, stopName, showTerminating, out);
         newApiBoard = new AdvancedApiBoard(this, stopID, stopName, showTerminating, out);
         newApiBoard.callAPIs();
 
-        // todo: remove maxx setting
-        //if (useMaxx) oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
         oldApiBoard = new TraditionalApiBoard(this, stopID);
-        oldApiBoard.callAPI();
+        oldApiBoard.updateData();
 
     }
 
@@ -343,11 +341,11 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     // Produces the list view and waits for click
     public void produceViewOld() {
 
-        if (Util.findStopType(stopName) > 0) {
-            Arrays.sort(oldApiBoard.items);
+        if (Util.findStopType(stopName) != Util.StopType.BUS) {
+            Collections.sort(oldApiBoard.items);
         }
 
-        String[] fake = new String[oldApiBoard.count];
+        String[] fake = new String[oldApiBoard.items.size()];
         ListView mListView = (ListView) findViewById(R.id.old_list);
         mListView.setAdapter(new OldArrayAdapter(this, fake));
 
@@ -367,7 +365,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String route = oldApiBoard.items[pos].route;
+                String route = oldApiBoard.items.get(pos).route;
                 Util.changeFavRoute(getApplicationContext(), route);
                 produceView();
                 produceViewOld();
@@ -460,16 +458,18 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             TextView scheduled = (TextView) rowView.findViewById(R.id.col3);
             TextView due = (TextView) rowView.findViewById(R.id.col4);
 
+            TraditionalApiBoard.Items item = oldApiBoard.items.get(position);
+
             // Show pier/platform for ferry/train
-            if (Util.findStopType(stopName) == 0) {
-                route.setText(oldApiBoard.items[position].route);
+            if (Util.findStopType(stopName) == Util.StopType.BUS) {
+                route.setText(item.route);
             } else {
-                route.setText(oldApiBoard.items[position].platform);
+                route.setText(item.platform);
             }
 
-            headsign.setText(oldApiBoard.items[position].headsign);
-            scheduled.setText(oldApiBoard.items[position].scheduled);
-            due.setText(oldApiBoard.items[position].dueTime);
+            headsign.setText(item.headsign);
+            scheduled.setText(item.scheduled);
+            due.setText(item.dueTime);
 
             /*
             // Change colour of row if terminating
@@ -482,8 +482,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
             // Check if route is in database and if so show heart icon
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            String routeName = oldApiBoard.items[position].route;
-            if (Util.isFavouriteRoute(getApplicationContext(), routeName)) {
+            if (Util.isFavouriteRoute(getApplicationContext(), item.route)) {
                 imageView.setImageResource(R.drawable.heart_icon_pink);
             }
 
@@ -602,10 +601,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
             // Change column header to pier/platform as appropriate
             switch (Util.findStopType(ServiceBoardActivity.stopName)) {
-                case 1:
+                case TRAIN:
                     ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.train_platform_label));
                     break;
-                case 2:
+                case FERRY:
                     ((TextView) rootView.findViewById(R.id.routeHed)).setText(getString(R.string.ferry_pier_label));
             }
 

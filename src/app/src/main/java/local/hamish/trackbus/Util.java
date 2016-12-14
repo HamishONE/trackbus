@@ -95,13 +95,14 @@ final class Util {
     }
 
     // Returns 1 or 2 if train or ferry
-    static int findStopType(String stopName) {
+    enum StopType {BUS, TRAIN, FERRY};
+    static StopType findStopType(String stopName) {
         if (stopName.contains("Train")) {
-            return 1;
+            return StopType.TRAIN;
         } else if (stopName.contains("Ferry")) {
-            return 2;
+            return StopType.FERRY;
         }
-        return 0;
+        return StopType.BUS;
     }
 
     // Converts dp to px for a given application context
