@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_history_selector"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|start"
+    android:padding="10dp"
+    android:paddingLeft="30dp"
+    android:paddingRight="30dp"
+    android:paddingStart="30dp"
+    android:paddingEnd="30dp"
+    android:background="@color/colorPrimary" >
+
+    <TextView
+        android:drawableRight="@drawable/ic_triangle_click"
+        android:drawablePadding="10dp"
+        android:drawableEnd="@drawable/ic_triangle_click"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:id="@+id/tv_history_selector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="17sp"
+        android:text="Live" />
+
+</RelativeLayout>

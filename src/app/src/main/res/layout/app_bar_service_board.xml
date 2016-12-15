@@ -32,4 +32,6 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/refresh_icon" />
 
+    <include layout="@layout/history_selector" />
+
 </android.support.design.widget.CoordinatorLayout>

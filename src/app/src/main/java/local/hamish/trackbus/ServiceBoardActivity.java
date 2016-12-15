@@ -75,6 +75,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
 
+    private enum choice {LIVE, TODAY, TOMORROW, DATE};
+    private CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
+    private CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
+
     @Override // On activity creation
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,6 +152,41 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         oldApiBoard = new TraditionalApiBoard(this, stopID);
         oldApiBoard.updateData();
+
+        final ServiceBoardActivity serviceBoardActivity = this;
+        RelativeLayout rl = (RelativeLayout) findViewById(R.id.layout_history_selector);
+        rl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View view) {
+
+                mViewPager.setCurrentItem(0, false);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(serviceBoardActivity);
+                builder.setTitle("Select timeframe");
+                builder.setItems(longNames, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        TextView tv = (TextView) findViewById(R.id.tv_history_selector);
+                        tv.setText(shortNames[which]);
+
+                        switch (choice.values()[which]) {
+                            case LIVE:
+                                oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
+                                break;
+                            case TODAY:
+                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, "20161214");
+                                break;
+                            case TOMORROW:
+                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, "20161218");
+                                break;
+                        }
+                        updateData(false);
+                    }
+                });
+                builder.show();
+            }
+        });
 
     }
 
@@ -452,8 +491,13 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
+
+            if (oldApiBoard.items == null) {
+                return rowView;
+            }
 
             TextView route = (TextView) rowView.findViewById(R.id.col1);
             TextView headsign = (TextView) rowView.findViewById(R.id.col2);
@@ -594,7 +638,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     }
 
     // Sets up old api tab
-    public static class OldBoardFragment extends Fragment implements View.OnClickListener {
+    public static class OldBoardFragment extends Fragment {
         public static final String ARG_OBJECT = "object";
 
         @Override
@@ -623,44 +667,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             swipeLayout.setColorSchemeColors(0xFF0000FF, 0xFFFF0000); // Red + Blue (full alpha)
             */
 
-            RelativeLayout rl = (RelativeLayout) rootView.findViewById(R.id.layout_history_selector);
-            rl.setOnClickListener(this);
-
             return rootView;
-        }
-
-        enum choice {LIVE, TODAY, TOMORROW, DATE};
-        CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
-        CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
-
-        @Override
-        public void onClick(final View view) {
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setTitle("Select timeframe");
-            builder.setItems(longNames, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-                    ServiceBoardActivity base = (ServiceBoardActivity) getActivity();
-                    TextView tv = (TextView) view.findViewById(R.id.tv_history_selector);
-                    tv.setText(shortNames[which]);
-
-                    switch (choice.values()[which]) {
-                        case LIVE:
-                            base.oldApiBoard = new TraditionalApiBoard(base, base.stopID);
-                            break;
-                        case TODAY:
-                            base.oldApiBoard = new ScheduledApiBoard(base, base.stopID, "20161214");
-                            break;
-                        case TOMORROW:
-                            base.oldApiBoard = new ScheduledApiBoard(base, base.stopID, "20161218");
-                            break;
-                    }
-                    base.updateData(false);
-                }
-            });
-            builder.show();
         }
     }
 
