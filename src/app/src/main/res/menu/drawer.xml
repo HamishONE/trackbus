@@ -9,7 +9,7 @@
         <item
             android:id="@+id/go_all_buses"
             android:icon="@drawable/bus_icon"
-            android:title="All Vehicles" />
+            android:title="@string/live_map_name" />
         <item
             android:id="@+id/go_favs"
             android:icon="@drawable/heart_icon_filled"

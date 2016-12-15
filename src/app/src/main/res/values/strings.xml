@@ -2,6 +2,7 @@
 
     <!-- Other -->
     <string name="app_name">Akl PT Tracker</string>
+    <string name="live_map_name">Live Map</string>
 
     <!-- Home screen -->
     <string name="refresh_stops">Refresh stops list</string>
@@ -17,6 +18,8 @@
     <string name="scheduled_time_heading">Scheduled</string>
     <string name="secs_away_heading">Due</string>
     <string name="stops_away_heading">Stops</string>
+    <string name="old_data_name">Standard Board</string>
+    <string name="new_data_name">Tracking Board</string>
 
     <!-- Tracker -->
     <string name="stops_away_label">Stops:</string>
@@ -29,7 +32,6 @@
     <!-- Hamburger menu -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="title_activity_all_buses">All Vehicles</string>
 
     <!--Settings-->
     <string name="settings_label">Settings</string>

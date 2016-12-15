@@ -550,7 +550,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     // Sets up tabs
     public class DemoCollectionPagerAdapter extends FragmentPagerAdapter {
 
-        String[] titles = {"Older Source", "Newer Source", "Map View"};
+        String[] titles = {getString(R.string.old_data_name), getString(R.string.new_data_name),
+                getString(R.string.live_map_name)};
 
         DemoCollectionPagerAdapter(FragmentManager fm) {super(fm);}
 

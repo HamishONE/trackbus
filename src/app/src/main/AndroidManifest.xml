@@ -58,7 +58,7 @@
 
         <activity
             android:name=".AllBusesActivity"
-            android:label="@string/title_activity_all_buses"
+            android:label="@string/live_map_name"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
