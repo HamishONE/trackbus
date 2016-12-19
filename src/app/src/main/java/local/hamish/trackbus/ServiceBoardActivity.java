@@ -50,9 +50,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.nullwire.trace.ExceptionHandler;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -170,15 +174,19 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                         TextView tv = (TextView) findViewById(R.id.tv_history_selector);
                         tv.setText(shortNames[which]);
 
+                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd", Locale.US);
+                        GregorianCalendar gc = new GregorianCalendar();
+
                         switch (choice.values()[which]) {
                             case LIVE:
                                 oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
                                 break;
                             case TODAY:
-                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, "20161214");
+                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
                                 break;
                             case TOMORROW:
-                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, "20161218");
+                                gc.add(Calendar.DATE, 1);
+                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
                                 break;
                         }
                         updateData(false);

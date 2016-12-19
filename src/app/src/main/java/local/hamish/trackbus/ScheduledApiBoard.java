@@ -37,18 +37,18 @@ class ScheduledApiBoard extends OldBoardParent {
 
                 item.route = vehicle.getString("route");
                 item.headsign = vehicle.getString("destination");
-                item.scheduled = vehicle.getString("time");
+                item.scheduled = vehicle.getString("time").substring(0, 5);
                 item.dueTime = "";
                 item.platform = "";
 
                 int hours = Integer.valueOf(item.scheduled.substring(0, 2));
                 if (hours >= 24) {
-                    item.scheduled = (hours - 24) + item.scheduled.substring(2, 8);
+                    item.scheduled = (hours - 24) + item.scheduled.substring(2, 5);
                 }
 
                 try {
                     SimpleDateFormat curFormater = new SimpleDateFormat("yyyyMMddHH:mm:ss", Locale.US);
-                    item.scheduledDate = curFormater.parse(date + item.scheduled);
+                    item.scheduledDate = curFormater.parse(date + vehicle.getString("time"));
                 } catch (ParseException e) {e.printStackTrace();}
 
                 items_temp.add(item);
