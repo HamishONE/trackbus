@@ -1,6 +1,8 @@
 package local.hamish.trackbus;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -37,6 +39,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -58,7 +61,8 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
-public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener,
+        View.OnClickListener {
 
     // Miscellaneous vars
     public String stopID = null;
@@ -159,43 +163,76 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         final ServiceBoardActivity serviceBoardActivity = this;
         RelativeLayout rl = (RelativeLayout) findViewById(R.id.layout_history_selector);
-        rl.setOnClickListener(new View.OnClickListener() {
+        rl.setOnClickListener(this);
+    }
+
+    @Override // Press on live/scheduled selector box
+    public void onClick(final View view) {
+
+        final ServiceBoardActivity serviceBoardActivity = (ServiceBoardActivity) view.getContext();
+        mViewPager.setCurrentItem(0, false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(serviceBoardActivity);
+        builder.setTitle("Select timeframe");
+        builder.setItems(longNames, new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(final View view) {
+            public void onClick(DialogInterface dialog, int which) {
 
-                mViewPager.setCurrentItem(0, false);
+                SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd", Locale.US);
+                GregorianCalendar gc = new GregorianCalendar();
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(serviceBoardActivity);
-                builder.setTitle("Select timeframe");
-                builder.setItems(longNames, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                switch (choice.values()[which]) {
+                    case DATE:
+                        pickDate(serviceBoardActivity);
+                        return;
+                    case TOMORROW:
+                        gc.add(Calendar.DATE, 1);
+                    case TODAY:
+                        oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
+                        break;
+                    case LIVE:
+                        oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
+                }
 
-                        TextView tv = (TextView) findViewById(R.id.tv_history_selector);
-                        tv.setText(shortNames[which]);
-
-                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd", Locale.US);
-                        GregorianCalendar gc = new GregorianCalendar();
-
-                        switch (choice.values()[which]) {
-                            case LIVE:
-                                oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
-                                break;
-                            case TODAY:
-                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
-                                break;
-                            case TOMORROW:
-                                gc.add(Calendar.DATE, 1);
-                                oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
-                                break;
-                        }
-                        updateData(false);
-                    }
-                });
-                builder.show();
+                TextView tv = (TextView) findViewById(R.id.tv_history_selector);
+                tv.setText(shortNames[which]);
+                updateData(false);
             }
         });
+        builder.show();
+    }
 
+    int mYear = 0;
+    int mMonth;
+    int mDay;
+    private void pickDate(final ServiceBoardActivity serviceBoardActivity) {
+
+        if (mYear == 0) {
+            Calendar c = Calendar.getInstance();
+            mYear = c.get(Calendar.YEAR);
+            mMonth = c.get(Calendar.MONTH);
+            mDay = c.get(Calendar.DAY_OF_MONTH);
+        }
+
+        DatePickerDialog dpd = new DatePickerDialog(this,
+                new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+
+                        mYear = year;
+                        mMonth = monthOfYear;
+                        mDay = dayOfMonth;
+
+                        TextView tv = (TextView) findViewById(R.id.tv_history_selector);
+                        String dateNice = String.format(Locale.US, "%d/%d/%d", dayOfMonth, monthOfYear + 1, year);
+                        tv.setText(dateNice);
+
+                        String dateStr = String.format(Locale.US, "%d%02d%02d", year, (monthOfYear + 1), dayOfMonth);
+                        oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, dateStr);
+                        updateData(false);
+                    }
+                }, mYear, mMonth, mDay);
+        dpd.show();
     }
 
     @Override
