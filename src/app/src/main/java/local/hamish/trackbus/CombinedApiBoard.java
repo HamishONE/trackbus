@@ -71,13 +71,6 @@ class CombinedApiBoard {
             int timestamp = object.getJSONObject("vehicle").getInt("timestamp");
             int occupancy_status = object.getJSONObject("vehicle").optInt("occupancy_status", -1);
 
-            if (start_time.equals("")) {
-
-                LatLng fixed = Util.fixTrainLocation(latitude, longitude);
-                latitude = fixed.latitude;
-                longitude = fixed.longitude;
-            }
-
             /*
             String values = "start_time='"+start_time+"',vehicle_id='"+vehicle_id+"',latitude="+latitude+",longitude="+longitude
                     +",bearing="+bearing+",timestamp="+timestamp+",occupancy_status="+occupancy_status;

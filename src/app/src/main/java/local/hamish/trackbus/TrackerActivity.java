@@ -394,13 +394,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             longi = long2;
             if (bearingNew != null) bearing = bearingNew;
 
-            LatLng latLng;
-            if (!isTrain) {
-                latLng = new LatLng(lat, longi);
-            } else {
-                latLng = Util.fixTrainLocation(lat, longi);
-            }
-
+            LatLng latLng = new LatLng(lat, longi);
             drawMap(latLng);
         }
 

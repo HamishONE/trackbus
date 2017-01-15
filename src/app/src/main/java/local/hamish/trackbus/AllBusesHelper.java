@@ -104,12 +104,7 @@ class AllBusesHelper {
                     if (out.get(i).trip.equals(locTripID)) {
                         lat = vehicle.getJSONObject("position").getDouble("latitude");
                         lon = vehicle.getJSONObject("position").getDouble("longitude");
-
-                        if (vehicle.getJSONObject("trip").has("start_time")) {
-                            latLng = new LatLng(lat, lon);
-                        } else {
-                            latLng = Util.fixTrainLocation(lat, lon);
-                        }
+                        latLng = new LatLng(lat, lon);
 
                         Marker marker;
                         if (Util.isFavouriteRoute(serviceBoardActivity, out.get(i).route)) {

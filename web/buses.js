@@ -131,8 +131,8 @@ function getData() {
 			var longi = data.response.entity[i].vehicle.position.longitude;	
 			var startTime = data.response.entity[i].vehicle.trip.start_time;
 			
-			// Fix the location of trains
-			if (startTime == undefined) {
+			// Fix the location of trains [not needed as of 15/01/17]
+			/*if (startTime == undefined) {
 				
 				lati = lati*1.66 + 23.7564;
 				longi = longi*1.66 - 114.8370;
@@ -143,7 +143,7 @@ function getData() {
 				
 			} else {
 				//continue; //only show trains
-			}
+			}*/
 			
 			// Add marker to map
 			var latLng = {lat: lati, lng: longi};
