@@ -441,7 +441,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getApplicationContext(), "Location not available from old data", Toast.LENGTH_LONG).show();
+                String message = "Location not available from " + getResources().getString(R.string.old_data_name);
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
             }
         });
 
