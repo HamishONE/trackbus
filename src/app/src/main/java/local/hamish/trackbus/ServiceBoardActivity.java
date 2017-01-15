@@ -425,6 +425,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     // Produces the list view and waits for click
     public void produceViewOld() {
 
+        findViewById(R.id.loadingPanelOld).setVisibility(View.GONE);
+
         if (oldApiBoard.items == null) return;
 
         if (Util.findStopType(stopName) != Util.StopType.BUS) {
@@ -434,10 +436,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         String[] fake = new String[oldApiBoard.items.size()];
         ListView mListView = (ListView) findViewById(R.id.old_list);
         mListView.setAdapter(new OldArrayAdapter(this, fake));
-
-        // Remove loading bars
-        findViewById(R.id.loadingPanelOld).setVisibility(View.GONE);
-        //swipeLayout.setRefreshing(false);
 
         // Open tracker on item click if location available
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
