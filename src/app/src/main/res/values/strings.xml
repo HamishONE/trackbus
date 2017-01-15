@@ -1,8 +1,11 @@
 <resources>
 
-    <!-- Other -->
+    <!-- Titles -->
     <string name="app_name">Akl PT Tracker</string>
+    <string name="home_name">Find a stop</string>
     <string name="live_map_name">Live Map</string>
+    <string name="favourites_name">Favourite stops</string>
+    <string name="settings_label">Settings</string>
 
     <!-- Home screen -->
     <string name="refresh_stops">Refresh stops list</string>
@@ -26,7 +29,6 @@
     <string name="secs_away_label">Due:</string>
 
     <!-- Favourites -->
-    <string name="title_activity_favourites">My Favourites</string>
     <string name="clear_favourites">Clear Favourites</string>
 
     <!-- Hamburger menu -->
@@ -34,12 +36,11 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <!--Settings-->
-    <string name="settings_label">Settings</string>
 
     <string-array name="start_page_list">
-        <item>Find a stop</item>
-        <item>All vehicles</item>
-        <item>Favourite Stops</item>
+        <item>@string/home_name</item>
+        <item>@string/live_map_name</item>
+        <item>@string/favourites_name</item>
     </string-array>
     <string-array name="start_page_list_values">
         <item>find_a_stop</item>

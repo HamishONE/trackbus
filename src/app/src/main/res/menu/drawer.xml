@@ -5,7 +5,7 @@
         <item
             android:id="@+id/go_main"
             android:icon="@drawable/map_icon"
-            android:title="Find a stop" />
+            android:title="@string/home_name" />
         <item
             android:id="@+id/go_all_buses"
             android:icon="@drawable/bus_icon"
@@ -13,7 +13,7 @@
         <item
             android:id="@+id/go_favs"
             android:icon="@drawable/heart_icon_filled"
-            android:title="Favourite stops" />
+            android:title="@string/favourites_name" />
         <item
             android:id="@+id/go_settings"
             android:icon="@drawable/cog"
