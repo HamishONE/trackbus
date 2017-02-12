@@ -30,6 +30,10 @@
 
     <!-- Favourites -->
     <string name="clear_favourites">Clear Favourites</string>
+    <string name="favourites_delete_all_dialog_title">Clear Favourites</string>
+    <string name="favourites_delete_all_dialog_text">This action cannot be undone</string>
+    <string name="favourites_delete_all_dialog_ok">Delete all</string>
+    <string name="favourites_delete_all_dialog_cancel">Keep</string>
 
     <!-- Hamburger menu -->
     <string name="navigation_drawer_open">Open navigation drawer</string>

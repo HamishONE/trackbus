@@ -1,6 +1,7 @@
 package local.hamish.trackbus;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,6 +11,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -105,12 +107,26 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
 
     // Deletes all favourites
     private void deleteAll() {
-        SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        myDB.execSQL("DELETE FROM Favourites;");
-        myDB.close();
-        // Reset view
-        listCount = 0;
-        readFavourites();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.favourites_delete_all_dialog_text).setTitle(R.string.favourites_delete_all_dialog_title);
+
+        builder.setPositiveButton(R.string.favourites_delete_all_dialog_ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+
+                SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
+                myDB.execSQL("DELETE FROM Favourites;");
+                myDB.close();
+
+                // Reset view
+                listCount = 0;
+                readFavourites();
+            }
+        });
+        builder.setNegativeButton(R.string.favourites_delete_all_dialog_cancel, null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override // Reset state on resume
