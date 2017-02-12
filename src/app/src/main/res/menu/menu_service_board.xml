@@ -19,20 +19,4 @@
         android:checkable="true"
         android:checked="false"
         android:visible="true" />
-
-        <group
-        android:id="@+id/source_group"
-        app:showAsAction="never"
-        android:checkableBehavior="single"
-        android:orderInCategory="3"
-        android:visible="false" >
-
-        <item android:id="@+id/useMaxx"
-            android:title="Use maxx.co.nz" />
-
-        <item android:id="@+id/useAT"
-            android:title="Use at.govt.nz" />
-
-    </group>
-
 </menu>

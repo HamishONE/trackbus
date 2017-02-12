@@ -235,18 +235,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         dpd.show();
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        super.onPrepareOptionsMenu(menu);
-
-        SharedPreferences settings = getPreferences(MODE_PRIVATE);
-        boolean useMaxx = settings.getBoolean("useMaxx", false);
-        if (useMaxx) menu.findItem(R.id.useMaxx).setChecked(true);
-        else menu.findItem(R.id.useAT).setChecked(true);
-
-        return true;
-    }
-
     @Override // Update data on restart
     protected void onRestart() {
         super.onRestart();
@@ -283,30 +271,17 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         myMenu = menu;
         changeHeartIcon();
 
-        myMenu.getItem(1).setChecked(showTerminating);
+        final MenuItem actionTerminatingSwitch = myMenu.findItem(R.id.action_terminating);
+        actionTerminatingSwitch.setChecked(showTerminating);
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.addOnPageChangeListener(
-                new ViewPager.SimpleOnPageChangeListener() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        switch (position) {
-                            case 0:
-                                myMenu.getItem(1).setVisible(false);
-                                myMenu.getItem(2).setVisible(true);
-                                myMenu.getItem(3).setVisible(true);
-                                break;
-                            case 1:
-                                myMenu.getItem(1).setVisible(true);
-                                myMenu.getItem(2).setVisible(false);
-                                myMenu.getItem(3).setVisible(false);
-                                break;
-                            case 2:
-                                myMenu.getItem(1).setVisible(false);
-                                myMenu.getItem(2).setVisible(false);
-                                myMenu.getItem(3).setVisible(false);
-                        }
-                    }
-                });
+            new ViewPager.SimpleOnPageChangeListener() {
+                @Override
+                public void onPageSelected(int position) {
+                    boolean showTerminatingSwitch = position == 1;
+                    actionTerminatingSwitch.setVisible(showTerminatingSwitch);
+                }
+            });
 
         return true;
     }
@@ -326,16 +301,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 onBackPressed();
                 return true;
 
-            case R.id.useMaxx:
-                changeTraditionalSource(true);
-                item.setChecked(true);
-                return true;
-
-            case R.id.useAT:
-                changeTraditionalSource(false);
-                item.setChecked(true);
-                return true;
-
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -346,22 +311,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         super.onResume();
 
         new DoReset().updateTime();
-    }
-
-    private void changeTraditionalSource(boolean useMaxx) {
-
-        SharedPreferences settings = getPreferences(MODE_PRIVATE);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("useMaxx", useMaxx);
-        editor.apply();
-
-        /*if (useMaxx) {
-            oldApiBoard = new TraditionalApiBoard_maxx_co_nz(this, stopID);
-        } else {
-            oldApiBoard = new TraditionalApiBoard_at_govt_nz(this, stopID);
-        }*/
-
-        updateData(false);
     }
 
     // Add current stop to favourites table in database
