@@ -562,7 +562,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(getApplicationContext())
-                            .setSmallIcon(R.drawable.at_logo)
+                            .setSmallIcon(R.drawable.ic_launcher_192)
                             .setContentTitle(title)
                             //.setContentText("test")
                             .setDeleteIntent(createOnDismissedIntent(getApplicationContext(), 47))
