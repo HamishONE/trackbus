@@ -271,6 +271,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         myMenu = menu;
         changeHeartIcon();
 
+        /* todo: uncomment if terminating service boolean works again
         final MenuItem actionTerminatingSwitch = myMenu.findItem(R.id.action_terminating);
         actionTerminatingSwitch.setChecked(showTerminating);
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -282,6 +283,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                     actionTerminatingSwitch.setVisible(showTerminatingSwitch);
                 }
             });
+        */
 
         return true;
     }

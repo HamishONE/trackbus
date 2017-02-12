@@ -18,5 +18,5 @@
         app:showAsAction="never"
         android:checkable="true"
         android:checked="false"
-        android:visible="true" />
+        android:visible="false" />
 </menu>
