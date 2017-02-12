@@ -769,7 +769,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         LatLngBounds bounds = builder.build();
 
-        int padding = 100; // offset from edges of the map in pixels HAS TO BE LOW FOR COMPATIBILITY
+        int padding = (int) getResources().getDimension(R.dimen.map_item_buffer);
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         map.moveCamera(cu);
 

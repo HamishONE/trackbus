@@ -11,6 +11,7 @@
     <dimen name="row_padding">8dp</dimen>
     <dimen name="board_left_padding">10dp</dimen>
     <dimen name="board_right_padding">15dp</dimen>
+    <dimen name="map_item_buffer">40dp</dimen>
 
     <!-- Add stop dialogue -->
     <dimen name="stop_dialogue_margin_left">20dp</dimen>
