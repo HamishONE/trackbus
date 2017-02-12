@@ -26,14 +26,11 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.1.0'
-    compile 'com.android.support:design:25.1.0'
-    compile 'com.squareup.picasso:picasso:2.1.1'
-    compile 'com.google.android.gms:play-services:10.0.1'
+    compile 'com.android.support:appcompat-v7:25.1.1'
+    compile 'com.android.support:design:25.1.1'
+    compile 'com.google.android.gms:play-services-maps:10.0.1'
     compile 'com.loopj.android:android-async-http:1.4.9'
-    //compile 'net.minidev:json-smart:2.2.1'
     compile 'com.android.support:multidex:1.0.1'
     compile project(':drag_sort_list')
     compile files('libs/trace.jar')
