@@ -20,6 +20,7 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -35,11 +36,14 @@ final class Util {
     }
 
     // Converts time string to Date object using format, assumes NZST/NZDT
-    static Date deformatTime(String s, String format) {
+    static GregorianCalendar deformatTime(String s, String format) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Pacific/Auckland"));
         try {
-            return simpleDateFormat.parse(s);
+            Date date = simpleDateFormat.parse(s);
+            GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Pacific/Auckland"));
+            gc.setTime(date);
+            return gc;
         }
         catch (ParseException ex) {
             System.out.println("Exception "+ex);

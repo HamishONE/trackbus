@@ -16,6 +16,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.TimeZone;
 
 class AdvancedApiBoard {
 
@@ -109,7 +110,7 @@ class AdvancedApiBoard {
             String destination ;
             int stopSeq;
             String schTimeStr;
-            GregorianCalendar schTime;
+            GregorianCalendar schTimestamp;
             int delay;
             String vehicle_id = null;
 
@@ -125,24 +126,18 @@ class AdvancedApiBoard {
                     continue;
                 }
 
-                // Parse scheduled time
-                GregorianCalendar cTime = new GregorianCalendar();
+                GregorianCalendar cTime = new GregorianCalendar(TimeZone.getTimeZone("Pacific/Auckland"));
 
                 if (schTimeStr.substring(0, 2).equals("24")) {
-                    // Adjust time as falls in next day
-                    schTimeStr = schTimeStr.replace("24", "00");
-
-                    (schTime = new GregorianCalendar()).setTime(Util.deformatTime(schTimeStr, "HH:mm:ss"));
-                    schTime = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
-                            cTime.get(Calendar.DAY_OF_MONTH)+1, schTime.get(Calendar.HOUR_OF_DAY),
-                            schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND) );
-                } else {
-
-                    (schTime = new GregorianCalendar()).setTime(Util.deformatTime(schTimeStr, "HH:mm:ss"));
-                    schTime = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
-                            cTime.get(Calendar.DAY_OF_MONTH), schTime.get(Calendar.HOUR_OF_DAY),
-                            schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND) );
+                    schTimeStr = "00" + schTimeStr.substring(2);
+                    cTime.set(Calendar.DAY_OF_MONTH, cTime.get(Calendar.DAY_OF_MONTH) + 1);
                 }
+                GregorianCalendar schTime = Util.deformatTime(schTimeStr, "HH:mm:ss");
+
+                schTimestamp = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
+                        cTime.get(Calendar.DAY_OF_MONTH), schTime.get(Calendar.HOUR_OF_DAY),
+                        schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND));
+                schTimestamp.setTimeZone(TimeZone.getTimeZone("Pacific/Auckland"));
 
                 if (stopData!=null) {
                     // Find stops sequence
@@ -156,7 +151,7 @@ class AdvancedApiBoard {
                             }
                         }
                         if (stopDict == null) {
-                            if (schTime.after(GregorianCalendar.getInstance())) {
+                            if (schTimestamp.after(GregorianCalendar.getInstance())) {
                                 // Make strings blank
                                 stopsAwayStr = "";
                                 dueStr = "";
@@ -178,7 +173,7 @@ class AdvancedApiBoard {
                             }
 
                             // Calculate due time
-                            double dueTime = schTime.getTimeInMillis() / 1000 + delay;
+                            double dueTime = schTimestamp.getTimeInMillis() / 1000 + delay;
                             double dueSecs = dueTime - (new Date().getTime() / 1000);
 
                             // Format numbers
@@ -191,7 +186,7 @@ class AdvancedApiBoard {
 
                 } else {
 
-                    if (schTime.after(GregorianCalendar.getInstance())) {
+                    if (schTimestamp.after(GregorianCalendar.getInstance())) {
                         // Make strings blank
                         stopsAwayStr = "";
                         dueStr = "";
@@ -212,7 +207,7 @@ class AdvancedApiBoard {
                 }
 
                 DateFormat df = new SimpleDateFormat("hh:mm a", Locale.US);
-                String schTimeStrNew = df.format(schTime.getTime());
+                String schTimeStrNew = df.format(schTimestamp.getTime());
 
                 item.trip = tripDataTrip;
                 item.route = route;
@@ -220,7 +215,7 @@ class AdvancedApiBoard {
                 item.stopsAway = stopsAwayStr;
                 item.headsign = destination;
                 item.dueTime = dueStr;
-                item.dateScheduled = schTime.getTimeInMillis() / 1000;
+                item.dateScheduled = schTimestamp.getTimeInMillis() / 1000;
                 item.vehicle_id = vehicle_id;
                 item.stopSequence = stopSeq;
                 out.add(item);
