@@ -378,8 +378,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
             @Override
             public void onProgress(long bytesWritten, long totalSize) {
-                //long progressPercentage = (long)100*bytesWritten/totalSize;
-                dialog.setMessage("Downloading from server (" + bytesWritten*100/4670000 + "%)");
+                String dataDownloaded = String.format(Locale.US, "(%.1fMB)", bytesWritten/1e6);
+                dialog.setMessage("Downloading from server " + dataDownloaded);
             }
 
             @Override
