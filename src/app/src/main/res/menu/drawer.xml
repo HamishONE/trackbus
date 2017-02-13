@@ -18,6 +18,10 @@
             android:id="@+id/go_settings"
             android:icon="@drawable/cog"
             android:title="@string/settings_label" />
+        <item
+            android:id="@+id/go_about"
+            android:icon="@drawable/info_icon"
+            android:title="@string/about_label" />
     </group>
 
     <item android:title="Recent Stops">

@@ -6,6 +6,7 @@
     <string name="live_map_name">Live Map</string>
     <string name="favourites_name">Favourite stops</string>
     <string name="settings_label">Settings</string>
+    <string name="about_label">About</string>
 
     <!-- Home screen -->
     <string name="refresh_stops">Refresh stops list</string>
@@ -34,6 +35,22 @@
     <string name="favourites_delete_all_dialog_text">This action cannot be undone</string>
     <string name="favourites_delete_all_dialog_ok">Delete all</string>
     <string name="favourites_delete_all_dialog_cancel">Keep</string>
+
+    <!-- About -->
+    <string name="about_dev_credit">Developed by Hamish O\'Neill during 2016/17.</string>
+    <string name="about_github_link">Open source on <a href="https://github.com/HamishONE/trackbus/">GitHub</a>.</string>
+    <string name="about_feedback_encourage">Feedback, feature requests and bug reports are appreciated (via Google Play or <a href="mailto:oneillhamish@gmail.com">email</a>).</string>
+    <string name="about_data_warning">All data is received directly from Auckland Transport servers and is therefore outside of my control.</string>
+    <string name="about_tips">\nTips and tricks:
+        \n&#8226; Click on a route in the tracking board or live map to access a tracking map.
+        \n&#8226; When first starting services generally appear in the standard board, the live map and the tracking board in that order.
+        \n&#8226; The due times in the standard board tend to be more sensible.
+        \n&#8226; Hold down on a route in one of the service boards to mark it as a favourite.
+        \n&#8226; In the tracking map press the three dots at the top to access the switch to turn on the Google traffic overlay.
+        \n&#8226; After service changes press the three dots at the top of find my stop to access the button to refresh the stops database.
+        \n&#8226; With the favourite stops: delete by swiping to the side, reorder by dragging the three bars, rename by holding down.
+        \n
+    </string>
 
     <!-- Hamburger menu -->
     <string name="navigation_drawer_open">Open navigation drawer</string>

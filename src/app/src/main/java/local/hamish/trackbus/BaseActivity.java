@@ -61,6 +61,10 @@ public class BaseActivity extends AppCompatActivity {
                 intent = new Intent(this, SettingsActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 break;
+            case R.id.go_about:
+                intent = new Intent(this, AboutActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                break;
             case R.id.bus1:
                 intent = new Intent(this, ServiceBoardActivity.class);
                 intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(recentStops.stopIDs[0]));
