@@ -241,7 +241,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     private void callApi() {
 
         getPointData(ATApi.getUrl(this, ATApi.API.shapeByTripId, tripID));
-        getRealtimeData();
+        getRealtimeData(false);
     }
 
     private void updateTimestamp() {
@@ -403,7 +403,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         handler.postDelayed(new Runnable() {
             public void run() {
                 findViewById(R.id.loadingPanelSmall).setVisibility(View.VISIBLE);
-                getRealtimeData();
+                getRealtimeData(false);
             }
         }, timeDelay);
     }
@@ -458,8 +458,11 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
     }
 
     // Get realtime data for trip
-    private void getRealtimeData() {
-        String urlString = ATApi.getUrl(this, ATApi.API.realtime, null) + "&tripid=" + tripID;
+    private void getRealtimeData(boolean skipTripParam) {
+        String urlString = ATApi.getUrl(this, ATApi.API.realtime, null);
+        if (!skipTripParam) {
+            urlString += "&tripid=" + tripID;
+        }
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(urlString, new AsyncHttpResponseHandler() {
             @Override
@@ -472,9 +475,8 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
                     newData = jsonObject.getJSONObject("response").getJSONArray("entity");
                     main();
                 } catch (JSONException e) {
-                    e.printStackTrace(); //todo: what are we doing?
-                    //getRealtimeData(ATApi.getUrl(ATApi.API.realtime) + "&tripid=" + tripID);
-                    //handleError(-5);
+                    // This happens when the location but not stops away is available
+                    getRealtimeData(true);
                 }
             }
 
@@ -505,7 +507,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v) {
                 circle.setVisibility(View.VISIBLE);
-                getRealtimeData();
+                getRealtimeData(false);
             }
         });
         snackbar.show();
