@@ -110,6 +110,12 @@ final class Util {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    static LatLngBounds getAklBounds() {
+        LatLng northeast = new LatLng(-36.003522, 175.437063);
+        LatLng southwest = new LatLng(-37.703045, 174.273933);
+        return new LatLngBounds(southwest, northeast);
+    }
+
     // Sets up the map the way we like it
     static void setupMap (Context context, GoogleMap map) {
 
@@ -123,10 +129,7 @@ final class Util {
         map.getUiSettings().setTiltGesturesEnabled(false);
         map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.style_json));
 
-        LatLng northeast = new LatLng(-36.003522, 175.437063);
-        LatLng southwest = new LatLng(-37.703045, 174.273933);
-        LatLngBounds Akl = new LatLngBounds(southwest, northeast);
-        map.setLatLngBoundsForCameraTarget(Akl);
+        map.setLatLngBoundsForCameraTarget(getAklBounds());
         map.setMinZoomPreference(8F);
     }
 

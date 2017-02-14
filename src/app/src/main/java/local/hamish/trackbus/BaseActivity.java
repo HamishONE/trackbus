@@ -108,10 +108,13 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         if (location != null) {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), zoom));
-        } else {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 14));
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            if (Util.getAklBounds().contains(latLng)) {
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+                return;
+            }
         }
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-36.851, 174.765), 15));
     }
 
 }
