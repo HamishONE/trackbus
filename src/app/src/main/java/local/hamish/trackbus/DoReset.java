@@ -12,10 +12,15 @@ class DoReset {
     }
 
     boolean doReset() {
+
+        /* DISABLE FEATURE FOR RELEASE */
+        return false;
+        /*
         if (lastExit == 0L) return false;
         long currentTime = GregorianCalendar.getInstance().getTimeInMillis();
         long diff = currentTime - lastExit;
         Log.e("DoReset", "diff = " + (double)diff/1000/60 + "minutes");
         return (diff > 60*60*1000); //60 minutes
+        */
     }
 }

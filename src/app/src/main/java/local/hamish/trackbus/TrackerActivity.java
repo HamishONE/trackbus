@@ -168,7 +168,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             map.setTrafficEnabled(showTraffic = !showTraffic);
             item.setChecked(showTraffic);
             return true;
-        } else if (id == R.id.action_show_notification) {
+        }
+        /* DISABLE FEATURE FOR RELEASE
+        else if (id == R.id.action_show_notification) {
             item.setChecked(showNotification = !showNotification);
             showNotificationChecked = showNotification;
 
@@ -176,7 +178,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             new NotificationTask().execute();
 
             return true;
-        } else if (id == android.R.id.home) {
+        }*/ else if (id == android.R.id.home) {
             //Call the back button's method
             onBackPressed();
             return true;

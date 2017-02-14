@@ -162,8 +162,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         oldApiBoard.updateData();
 
         final ServiceBoardActivity serviceBoardActivity = this;
+        /* DISABLE FEATURE FOR RELEASE
         RelativeLayout rl = (RelativeLayout) findViewById(R.id.layout_history_selector);
         rl.setOnClickListener(this);
+        */
     }
 
     @Override // Press on live/scheduled selector box

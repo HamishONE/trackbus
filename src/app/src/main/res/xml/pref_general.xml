@@ -9,6 +9,7 @@
         android:positiveButtonText="@null"
         android:title="Open on start" />
 
+    <!-- DISABLE FEATURE FOR RELEASE
     <ListPreference
         android:defaultValue="false"
         android:entries="@array/server_list"
@@ -17,6 +18,7 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:title="Use server buffer" />
+    -->
 
     <ListPreference
         android:defaultValue="v2"

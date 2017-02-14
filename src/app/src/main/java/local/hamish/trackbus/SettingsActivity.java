@@ -50,7 +50,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             setHasOptionsMenu(true);
 
             bindPreferenceSummaryToValue(findPreference("start_page"));
-            bindPreferenceSummaryToValue(findPreference("server_buffer"));
+            /* DISABLE FEATURE FOR RELEASE
+            bindPreferenceSummaryToValue(findPreference("server_buffer"));*/
             bindPreferenceSummaryToValue(findPreference("api_version"));
         }
     }

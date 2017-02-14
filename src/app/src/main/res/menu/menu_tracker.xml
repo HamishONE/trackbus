@@ -9,9 +9,11 @@
         app:showAsAction="never"
         android:checkable="true"
         android:checked="false" />
+    <!-- DISABLE FEATURE FOR RELEASE
     <item
         android:id="@+id/action_show_notification"
         android:orderInCategory="1"
         android:title="Show map in notification"
         app:showAsAction="never" />
+    -->
 </menu>
