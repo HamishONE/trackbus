@@ -339,9 +339,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                /*if (out.get(position).stopsAway.length() == 0) {
+                if (out.get(position).stopsAway.length() == 0) {
                     Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
-                } else*/ {
+                } else {
                     callTracker(out.get(position).trip, out.get(position).stopSequence,
                             out.get(position).route, out.get(position).dateScheduled);
                 }
