@@ -2,6 +2,7 @@ package local.hamish.trackbus;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -39,6 +40,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override // On activity creation
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
 
     protected Intent getHamburgerIntent(RecentStops recentStops, MenuItem item) {
