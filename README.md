@@ -2,6 +2,8 @@
 
 An android app delivering a rich bus experience using Auckland Transport APIs.
 
+Download the latest release from [Google Play](https://play.google.com/store/apps/details?id=local.hamish.trackbus) or the releases page.
+
 Contributors welcome.
 
 ## Description for Google Play
