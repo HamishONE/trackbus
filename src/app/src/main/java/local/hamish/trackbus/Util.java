@@ -178,7 +178,6 @@ final class Util {
     static boolean isFavouriteRoute(Context context, String routeName) {
 
         SQLiteDatabase myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS FavRoutes(route TEXT);");
         Cursor resultSet = myDB.rawQuery("SELECT * FROM FavRoutes WHERE route='" + routeName + "'", null);
         boolean isFav = resultSet.getCount() > 0;
         resultSet.close();

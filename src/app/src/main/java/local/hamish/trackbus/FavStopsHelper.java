@@ -33,9 +33,6 @@ class FavStopsHelper {
 
         SQLiteDatabase myDB = app.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
 
-        // Open or create database and create favourites table if needed
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
-
         // Query table for current stop
         Cursor resultSet = myDB.rawQuery("SELECT * FROM Favourites WHERE stopID=" + stopID, null);
         resultSet.moveToFirst();

@@ -14,7 +14,6 @@ class RecentStops {
 
     RecentStops(SQLiteDatabase myDB, Menu menu) {
         this.myDB = myDB;
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS RecentStops(stopID INTEGER, stopName TEXT);");
 
         menuItems[0] = menu.findItem(R.id.bus1);
         menuItems[1] = menu.findItem(R.id.bus2);

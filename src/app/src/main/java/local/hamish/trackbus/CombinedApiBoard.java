@@ -106,16 +106,10 @@ class CombinedApiBoard {
         myDB.execSQL("CREATE TABLE CombinedApi (" + cols0 + ");");
         */
 
-        String cols1 = "trip_id TEXT, route_id TEXT, vehicle_id TEXT, stop_sequence INTEGER, " + "stop_id INTEGER, delay INTEGER";
-        myDB.execSQL("DROP TABLE IF EXISTS StopData");
-        myDB.execSQL("CREATE TABLE StopData (" + cols1 + ");");
-
-        String cols2 = "trip_id TEXT, route_id TEXT, start_time TEXT, vehicle_id TEXT, latitude REAL, longitude REAL, bearing INTEGER, timestamp INTEGER, " +
-                "occupancy_status INTEGER";
-        myDB.execSQL("DROP TABLE IF EXISTS LocData");
-        myDB.execSQL("CREATE TABLE LocData (" + cols2 + ");");
-
         myDB.beginTransaction();
+        myDB.execSQL("DELETE FROM StopData");
+        myDB.execSQL("DELETE FROM LocData");
+
         for (int i=0; i<apiResponse.length(); i++) {
             try {
                 JSONObject object = apiResponse.getJSONObject(i);

@@ -297,8 +297,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private void loadStops(boolean override) {
 
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Stops(stopID INTEGER, lat FLOAT, lon FLOAT, stopName TEXT);");
-
         Cursor resultSet = myDB.rawQuery("SELECT * FROM Stops", null);
         resultSet.moveToFirst();
         int count = resultSet.getCount();

@@ -95,7 +95,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         getRoutes.updateData();
         combinedApiBoard = new CombinedApiBoard(this, this);
         getFerrys = new GetFerrys(this, this);
-        GetBearings.createTable(this);
         getBearings = new GetBearings(this, this);
         onClick(null);
     }
