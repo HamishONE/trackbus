@@ -20,4 +20,9 @@
     <!-- Tracker -->
     <dimen name="route_line_thickness">2dp</dimen>
 
+    <!-- Live Map -->
+    <dimen name="bitmap_width">20dp</dimen>
+    <dimen name="bitmap_height_reg">40dp</dimen>
+    <dimen name="bitmap_height_train">50dp</dimen>
+
 </resources>

@@ -25,16 +25,6 @@ class GetBearings {
         this.callback = callback;
     }
 
-    static void createTable(Context context) {
-
-        SQLiteDatabase myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
-
-        String cols = "trip_id TEXT, bearing INTEGER";
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Bearings (" + cols + ");");
-
-        myDB.close();
-    }
-
     void updateData() {
         getData();
     }

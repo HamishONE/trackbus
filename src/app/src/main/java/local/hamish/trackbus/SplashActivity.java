@@ -13,6 +13,8 @@ public class SplashActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
 
+        new DatabaseManager(this).createTables();
+
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         String value = settings.getString("start_page", "find_a_stop");
 

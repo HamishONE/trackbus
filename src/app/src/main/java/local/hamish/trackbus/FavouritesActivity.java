@@ -143,10 +143,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
     // Reads from favourites table in database into array
     public void readFavourites() {
 
-        // Open or create database and create favourites table if needed
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
-
         Cursor resultSet = myDB.rawQuery("SELECT * FROM Favourites", null);
         resultSet.moveToFirst();
         if (resultSet.getCount() == 0)
@@ -233,7 +230,6 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         @Override
         public void remove(String stopID) {
             SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-            myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER ,stopName TEXT, userName TEXT);");
             myDB.execSQL("DELETE FROM Favourites WHERE stopID=" + stopID + ";");
             myDB.close();
         }

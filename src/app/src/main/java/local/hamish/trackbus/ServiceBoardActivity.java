@@ -445,7 +445,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     public void changeHeartIcon() {
         // Open or create database and create favourites table if needed
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Favourites(stopID INTEGER, stopName TEXT, userName TEXT);");
         // Query table for current stop
         Cursor resultSet = myDB.rawQuery("SELECT * FROM Favourites WHERE stopID=" + stopID, null);
         resultSet.moveToFirst();

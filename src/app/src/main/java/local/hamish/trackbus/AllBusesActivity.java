@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -96,7 +95,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         getRoutes.updateData();
         combinedApiBoard = new CombinedApiBoard(this, this);
         getFerrys = new GetFerrys(this, this);
-        GetBearings.createTable(this);
         getBearings = new GetBearings(this, this);
         onClick(null);
     }
@@ -337,6 +335,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                     double maxLat = upperRight.latitude;
                     double minLon = lowerLeft.longitude;
                     double maxLon = upperRight.longitude;
+                    BitmapManager bitmapManager = new BitmapManager(getApplicationContext());
 
                     String sql = "SELECT latitude, longitude, start_time, LocData.trip_id, route_short_name," +
                             " Bearings.bearing, LocData.bearing, timestamp, vehicle_id, route_long_name FROM LocData " +
@@ -381,15 +380,13 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         markerOptions.anchor(0.5F, 0.5F);
                         markerOptions.infoWindowAnchor(0.5F, 0.5F);
 
-                        SetBitmap setBitmap = new SetBitmap(isTrain, route, vehicle_id);
-                        Integer height_dp = setBitmap.height_dp;
-                        Bitmap vehicleBitmap = setBitmap.vehicleBitmap;
+                        Bitmap vehicleBitmap = bitmapManager.getVehicleBitmap(isTrain, route, vehicle_id);
 
                         Bitmap imageBitmap = vehicleBitmap.copy(vehicleBitmap.getConfig(), true);
                         Canvas canvas = new Canvas(imageBitmap);
                         Paint paint = new Paint();
                         paint.setColor(Color.WHITE);
-                        paint.setTextSize((float) (canvas.getDensity() / 6));
+                        paint.setTextSize(canvas.getWidth()*0.6F);
                         paint.setTextAlign(Paint.Align.CENTER);
                         paint.setTypeface(Typeface.DEFAULT_BOLD);
 
@@ -405,10 +402,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         y = (int) (canvas.getHeight() / 2 - (paint.descent() + paint.ascent()) / 2);
                         canvas.drawText(route, x, y, paint);
 
-                        int width = (int) Util.convertDpToPixel(20, getApplicationContext());
-                        int height = (int) Util.convertDpToPixel(height_dp, getApplicationContext());
-                        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-                        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+                        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(imageBitmap));
 
                         AllBusesActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
@@ -428,6 +422,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
                         resultSet.moveToNext();
                     }
 
+                    bitmapManager.close();
                     resultSet.close();
                     myDB.close();
 
@@ -612,48 +607,6 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         Tag tag = (Tag) marker.getTag();
         Util.changeFavRoute(this, tag.route);
         done(true);
-    }
-
-    private Bitmap busBitmap;
-    private Bitmap trainBitmap;
-    private Bitmap ddBitmap;
-    private Bitmap favBusBitmap;
-    private Bitmap favTrainBitmap;
-
-    private class SetBitmap {
-
-        Bitmap vehicleBitmap;
-        int height_dp;
-
-        SetBitmap(boolean isTrain, String route, String vehicle_id) {
-
-            if (busBitmap == null) {
-                busBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_blue);
-                trainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_purple);
-                ddBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_brown);
-                favBusBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_bus_red);
-                favTrainBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_train_red);
-            }
-
-            boolean isFav = Util.isFavouriteRoute(getApplicationContext(), route);
-            if (isTrain) {
-                height_dp = 50;
-                if (isFav) {
-                    vehicleBitmap = favTrainBitmap;
-                } else {
-                    vehicleBitmap = trainBitmap;
-                }
-            } else {
-                height_dp = 40;
-                if (isFav) {
-                    vehicleBitmap = favBusBitmap;
-                } else if (ATApi.isDoubleDecker(vehicle_id)) {
-                    vehicleBitmap = ddBitmap;
-                } else {
-                    vehicleBitmap = busBitmap;
-                }
-            }
-        }
     }
 
     static private class Tag {

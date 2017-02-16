@@ -30,7 +30,6 @@ class GetRoutes {
     void updateData() {
 
         myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
-        myDB.execSQL("CREATE TABLE IF NOT EXISTS Meta (id TEXT, value INTEGER);");
         Cursor resultSet = myDB.rawQuery("SELECT id, value FROM Meta WHERE id = 'routes_last_updated';", null);
         resultSet.moveToFirst();
 
@@ -61,9 +60,7 @@ class GetRoutes {
         myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
         myDB.beginTransaction();
 
-        String cols = "route_id TEXT, route_short_name TEXT, route_long_name TEXT, route_type INTEGER";
-        myDB.execSQL("DROP TABLE IF EXISTS Routes");
-        myDB.execSQL("CREATE TABLE Routes (" + cols + ");");
+        myDB.execSQL("DELETE FROM Routes");
 
         for (int i=0; i<apiResponse.length(); i++) {
             try {

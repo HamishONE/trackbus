@@ -47,10 +47,7 @@ class GetFerrys {
 
         myDB = context.openOrCreateDatabase("main", Context.MODE_PRIVATE, null);
         myDB.beginTransaction();
-
-        String cols = "vessel TEXT, latitude REAL, longitude REAL, timestamp STRING";
-        myDB.execSQL("DROP TABLE IF EXISTS Ferrys");
-        myDB.execSQL("CREATE TABLE Ferrys (" + cols + ");");
+        myDB.execSQL("DELETE FROM Ferrys");
 
         for (int i=0; i<apiResponse.length(); i++) {
             try {
