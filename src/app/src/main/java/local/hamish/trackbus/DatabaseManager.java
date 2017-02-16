@@ -30,6 +30,11 @@ class DatabaseManager {
         myDB.execSQL("CREATE TABLE IF NOT EXISTS Ferrys (vessel TEXT, latitude REAL, longitude REAL, timestamp TEXT);");
         myDB.execSQL("CREATE TABLE IF NOT EXISTS Bearings (trip_id TEXT, bearing INTEGER);");
 
+        // Update or create db_version
+        int db_version = 1;
+        myDB.execSQL("UPDATE Meta SET value=" + db_version + " WHERE id='db_version';" +
+                "INSERT INTO Meta (id, value) SELECT 'db_version', " + db_version + " WHERE (Select Changes() = 0);");
+
         myDB.setTransactionSuccessful();
         myDB.endTransaction();
         myDB.close();
