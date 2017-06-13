@@ -91,7 +91,7 @@ class ATApi {
                 return getATRoot(settings) + "gtfs/stops" + getAuthorization(settings);
             case departures:
                 if (param == null) return null;
-                return getATRoot(settings) + "public-restricted/departures/" + param + getAuthorization(settings);
+                return getATRoot(settings) + "public-restricted/departures/" + param + getAuthorization(settings) + "&hours=12";
         }
 
         return null;
