@@ -29,7 +29,7 @@ dependencies {
     compile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
-    compile 'com.google.android.gms:play-services-maps:11.0.0'
+    compile 'com.google.android.gms:play-services-maps:11.0.4'
     compile 'com.loopj.android:android-async-http:1.4.9'
     compile project(':drag_sort_list')
     compile files('libs/trace.jar')
