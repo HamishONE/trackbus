@@ -146,21 +146,18 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     // Listens for change in map zoom or location
     public GoogleMap.OnCameraIdleListener getCameraChangeListener() {
-        return new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
-                float zoom = map.getCameraPosition().zoom;
-                if (zoom < 14) {
-                    if (isVisible) {
-                        for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
-                        isVisible = false;
-                    }
-                } else {
-                    findBounds();
-                    if (!isVisible) {
-                        for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(true);}
-                        isVisible = true;
-                    }
+        return () -> {
+            float zoom = map.getCameraPosition().zoom;
+            if (zoom < 14) {
+                if (isVisible) {
+                    for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
+                    isVisible = false;
+                }
+            } else {
+                findBounds();
+                if (!isVisible) {
+                    for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(true);}
+                    isVisible = true;
                 }
             }
         };
@@ -235,15 +232,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             }
             //.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_for_map_purpul)));
 
-            map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-                @Override
-                public void onInfoWindowClick(Marker arg0) {
-                    String stopID = arg0.getTitle();
-                    String stopName = arg0.getSnippet();
-                    moveNext(stopID, stopName);
-                }
+            map.setOnInfoWindowClickListener(marker -> {
+                String stopID1 = marker.getTitle();
+                String stopName = marker.getSnippet();
+                moveNext(stopID1, stopName);
             });
-
         }
         len += i;
     }
