@@ -48,7 +48,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -94,16 +93,16 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Change recent stops
@@ -113,9 +112,9 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         myDB.close();
 
         // Link to header TextViews
-        tvStops = (TextView) findViewById(R.id.stop_info);
-        tvDue = (TextView) findViewById(R.id.due_info);
-        tvTimestamp = (TextView) findViewById(R.id.timestamp_info);
+        tvStops = findViewById(R.id.stop_info);
+        tvDue = findViewById(R.id.due_info);
+        tvTimestamp = findViewById(R.id.timestamp_info);
 
         // Get tripID and stopSeq from intent
         Intent intent = getIntent();
@@ -193,7 +192,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
             finish();
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -224,7 +223,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (!drawer.isDrawerOpen(GravityCompat.START)) {
             stopCode();
         }
@@ -615,6 +614,7 @@ public class TrackerActivity extends BaseActivity implements NavigationView.OnNa
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private PendingIntent createOnDismissedIntent(Context context, int notificationId) {
         Intent intent = new Intent(context, NotificationDismissedReceiver.class);
         intent.putExtra("local.hamish.trackbus.notificationId", notificationId);

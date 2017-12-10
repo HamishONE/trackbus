@@ -2,7 +2,6 @@ package local.hamish.trackbus;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -62,11 +61,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup favourites button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -75,12 +74,12 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         });
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         //navigationView.getMenu().getItem(0).setChecked(true);
         //navigationView.getMenu().getItem(1).setChecked(false);
@@ -136,7 +135,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         super.onResume();
 
         // Setup recent stops
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
@@ -191,7 +190,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             startActivity(getHamburgerIntent(recentStops, item));
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -410,6 +409,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
 }
 
+@SuppressWarnings("ALL")
 @JsonObject
 class Stop {
 

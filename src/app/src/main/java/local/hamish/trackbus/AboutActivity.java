@@ -26,19 +26,19 @@ public class AboutActivity extends BaseActivity implements NavigationView.OnNavi
         setContentView(R.layout.activity_about);
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Make links clickable
-        TextView tv_links[] = {(TextView) findViewById(R.id.about_tv_link1), (TextView) findViewById(R.id.about_tv_link2)};
+        TextView tv_links[] = {findViewById(R.id.about_tv_link1), findViewById(R.id.about_tv_link2)};
         for (TextView tv : tv_links) {
             tv.setMovementMethod(LinkMovementMethod.getInstance());
         }
@@ -57,7 +57,7 @@ public class AboutActivity extends BaseActivity implements NavigationView.OnNavi
             startActivity(getHamburgerIntent(recentStops, item));
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -67,7 +67,7 @@ public class AboutActivity extends BaseActivity implements NavigationView.OnNavi
         super.onResume();
 
         // Setup recent stops
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();

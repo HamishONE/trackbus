@@ -24,11 +24,13 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+@SuppressWarnings("SameParameterValue")
 final class Util {
 
     private Util() {}
 
     private static long start = System.nanoTime();
+    @SuppressWarnings("unused")
     static void printTiming(String message) {
         Log.d("HamishTiming", message + "  [after " + (System.nanoTime()-start)/1000 + "us]");
         //Log.d("HamishTiming", message + "  [after " + (System.nanoTime()-start)/1000000 + "ms]");
@@ -87,7 +89,7 @@ final class Util {
     }
 
     // Returns 1 or 2 if train or ferry
-    enum StopType {BUS, TRAIN, FERRY};
+    enum StopType {BUS, TRAIN, FERRY}
     static StopType findStopType(String stopName) {
         if (stopName.contains("Train")) {
             return StopType.TRAIN;
@@ -106,6 +108,7 @@ final class Util {
 
     private static boolean isNetworkAvailable(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert cm != null;
         NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }

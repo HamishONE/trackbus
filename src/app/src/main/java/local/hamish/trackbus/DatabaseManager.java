@@ -9,7 +9,7 @@ class DatabaseManager {
 
     DatabaseManager(Context context) {
         this.context = context;
-    };
+    }
 
     void createTables() {
 

@@ -1,6 +1,5 @@
 package local.hamish.trackbus;
 
-import android.content.Context;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
@@ -134,6 +133,7 @@ class AdvancedApiBoard {
                 }
                 GregorianCalendar schTime = Util.deformatTime(schTimeStr, "HH:mm:ss");
 
+                assert schTime != null;
                 schTimestamp = new GregorianCalendar(cTime.get(Calendar.YEAR), cTime.get(Calendar.MONTH),
                         cTime.get(Calendar.DAY_OF_MONTH), schTime.get(Calendar.HOUR_OF_DAY),
                         schTime.get(Calendar.MINUTE), schTime.get(Calendar.SECOND));

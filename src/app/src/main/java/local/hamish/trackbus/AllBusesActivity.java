@@ -72,19 +72,19 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_all_buses);
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Setup refresh FAB
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(this);
 
         // Setup map
@@ -199,7 +199,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             startActivity(getHamburgerIntent(recentStops, item));
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -540,6 +540,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
             Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(resizedBitmap);
             Drawable shape = ContextCompat.getDrawable(this, R.drawable.marker_ferry);
+            assert shape != null;
             shape.setBounds(0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
             shape.draw(canvas);
 
@@ -605,6 +606,7 @@ public class AllBusesActivity extends BaseActivity implements OnMapReadyCallback
     public void onInfoWindowLongClick(Marker marker) {
 
         Tag tag = (Tag) marker.getTag();
+        assert tag != null;
         Util.changeFavRoute(this, tag.route);
         done(true);
     }
