@@ -326,6 +326,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         Stop stop = response.response.get(i);
                         if (stop.location_type != 0) continue;
 
+                        if (stop.stop_id.contains("-")) {
+                            int end = stop.stop_id.indexOf("-");
+                            stop.stop_id = stop.stop_id.substring(0, end);
+                        }
                         if (stop.stop_id.contains("_")) {
                             int end = stop.stop_id.indexOf("_");
                             stop.stop_id = stop.stop_id.substring(0, end);
