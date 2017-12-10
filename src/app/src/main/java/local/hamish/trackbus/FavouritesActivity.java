@@ -45,22 +45,22 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
         ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup drag callbacks
-        final DragSortListView lv = (DragSortListView) findViewById(R.id.list);
+        final DragSortListView lv = findViewById(R.id.list);
         lv.setDropListener(mDropListener);
         lv.setRemoveListener(mRemoveListener);
         lv.setDragScrollProfile(mDragScrollProfile);
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Change recent stops
@@ -165,7 +165,7 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
 
     // Produces the list view and waits for click
     private void produceView() {
-        ListView mListView = (ListView) findViewById(R.id.list);
+        ListView mListView = findViewById(R.id.list);
         mAdapter = new FavouritesArrayAdapter(this, Arrays.copyOf(stopArray, listCount));
         mListView.setAdapter(mAdapter);
 
@@ -216,9 +216,9 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.favourites_row_layout, parent, false);
 
-            TextView stopID = ((TextView) rowView.findViewById(R.id.stop_number));
-            TextView stopName = ((TextView) rowView.findViewById(R.id.stop_name));
-            TextView userName = ((TextView) rowView.findViewById(R.id.user_name));
+            TextView stopID = rowView.findViewById(R.id.stop_number);
+            TextView stopName = rowView.findViewById(R.id.stop_name);
+            TextView userName = rowView.findViewById(R.id.user_name);
 
             stopID.setText(stopArray[position]);
             stopName.setText(nameArray[position]);

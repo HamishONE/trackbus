@@ -1,6 +1,5 @@
 package local.hamish.trackbus;
 
-import android.content.Context;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
@@ -16,7 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 
 class AllBusesHelper {
 

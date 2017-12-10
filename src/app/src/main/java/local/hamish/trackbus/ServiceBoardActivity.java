@@ -1,7 +1,6 @@
 package local.hamish.trackbus;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -83,7 +82,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private ViewPager mViewPager;
     public Snackbar snackbar = null;
 
-    private enum choice {LIVE, TODAY, TOMORROW, DATE};
+    private enum choice {LIVE, TODAY, TOMORROW, DATE}
     private CharSequence shortNames[] = new CharSequence[] {"Live", "Today", "Tomorrow", "<date>"};
     private CharSequence longNames[] = new CharSequence[] {"Live (next 6 hours)", "Today", "Tomorrow", "Pick a date..."};
 
@@ -96,25 +95,25 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         // Setup tabs
         DemoCollectionPagerAdapter mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(getSupportFragmentManager());
-        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager = findViewById(R.id.pager);
         mViewPager.setAdapter(mDemoCollectionPagerAdapter);
         mViewPager.setOffscreenPageLimit(3);
 
         // Give the TabLayout the ViewPager
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        TabLayout tabLayout = findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Extract stopID and stopName
@@ -129,7 +128,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         myDB.close();
 
         // Setup update button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -163,7 +162,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         final ServiceBoardActivity serviceBoardActivity = this;
         /* DISABLE FEATURE FOR RELEASE
-        RelativeLayout rl = (RelativeLayout) findViewById(R.id.layout_history_selector);
+        RelativeLayout rl = findViewById(R.id.layout_history_selector);
         rl.setOnClickListener(this);
         */
     }
@@ -196,7 +195,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                         oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
                 }
 
-                TextView tv = (TextView) findViewById(R.id.tv_history_selector);
+                TextView tv = findViewById(R.id.tv_history_selector);
                 tv.setText(shortNames[which]);
                 updateData(false);
             }
@@ -225,7 +224,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                         mMonth = monthOfYear;
                         mDay = dayOfMonth;
 
-                        TextView tv = (TextView) findViewById(R.id.tv_history_selector);
+                        TextView tv = findViewById(R.id.tv_history_selector);
                         String dateNice = String.format(Locale.US, "%d/%d/%d", dayOfMonth, monthOfYear + 1, year);
                         tv.setText(dateNice);
 
@@ -261,7 +260,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             startActivity(getHamburgerIntent(recentStops, item));
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -430,7 +429,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         if (!fromSnackbar && snackbar != null && snackbar.isShown()) {
             View snackbarView = snackbar.getView();
-            Button snackbarActionButton = (Button) snackbarView.findViewById(android.support.design.R.id.snackbar_action);
+            Button snackbarActionButton = snackbarView.findViewById(android.support.design.R.id.snackbar_action);
             snackbarActionButton.performClick();
         }
 
@@ -495,10 +494,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 return rowView;
             }
 
-            TextView route = (TextView) rowView.findViewById(R.id.col1);
-            TextView headsign = (TextView) rowView.findViewById(R.id.col2);
-            TextView scheduled = (TextView) rowView.findViewById(R.id.col3);
-            TextView due = (TextView) rowView.findViewById(R.id.col4);
+            TextView route = rowView.findViewById(R.id.col1);
+            TextView headsign = rowView.findViewById(R.id.col2);
+            TextView scheduled = rowView.findViewById(R.id.col3);
+            TextView due = rowView.findViewById(R.id.col4);
 
             TraditionalApiBoard.Items item = oldApiBoard.items.get(position);
 
@@ -523,7 +522,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             */
 
             // Check if route is in database and if so show heart icon
-            ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
+            ImageView imageView = rowView.findViewById(R.id.icon);
             if (Util.isFavouriteRoute(getApplicationContext(), item.route)) {
                 imageView.setImageResource(R.drawable.heart_icon_pink);
             }
@@ -705,6 +704,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        assert locationManager != null;
         Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
         if (location != null) {
             builder.include(new LatLng(location.getLatitude(), location.getLongitude()));

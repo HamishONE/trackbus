@@ -2,7 +2,6 @@ package local.hamish.trackbus;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -62,11 +61,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         ExceptionHandler.register(this, "http://hamishserver.ddns.net/crash_log/");
 
         // Setup action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Setup favourites button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -75,12 +74,12 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         });
 
         // Setup hamburger menu
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         //navigationView.getMenu().getItem(0).setChecked(true);
         //navigationView.getMenu().getItem(1).setChecked(false);
@@ -136,7 +135,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         super.onResume();
 
         // Setup recent stops
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         SQLiteDatabase myDB = openOrCreateDatabase("main", MODE_PRIVATE, null);
         recentStops = new RecentStops(myDB, navigationView.getMenu());
         recentStops.readStops();
@@ -147,21 +146,18 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     // Listens for change in map zoom or location
     public GoogleMap.OnCameraIdleListener getCameraChangeListener() {
-        return new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
-                float zoom = map.getCameraPosition().zoom;
-                if (zoom < 14) {
-                    if (isVisible) {
-                        for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
-                        isVisible = false;
-                    }
-                } else {
-                    findBounds();
-                    if (!isVisible) {
-                        for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(true);}
-                        isVisible = true;
-                    }
+        return () -> {
+            float zoom = map.getCameraPosition().zoom;
+            if (zoom < 14) {
+                if (isVisible) {
+                    for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
+                    isVisible = false;
+                }
+            } else {
+                findBounds();
+                if (!isVisible) {
+                    for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(true);}
+                    isVisible = true;
                 }
             }
         };
@@ -191,7 +187,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             startActivity(getHamburgerIntent(recentStops, item));
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -236,15 +232,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             }
             //.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_for_map_purpul)));
 
-            map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-                @Override
-                public void onInfoWindowClick(Marker arg0) {
-                    String stopID = arg0.getTitle();
-                    String stopName = arg0.getSnippet();
-                    moveNext(stopID, stopName);
-                }
+            map.setOnInfoWindowClickListener(marker -> {
+                String stopID1 = marker.getTitle();
+                String stopName = marker.getSnippet();
+                moveNext(stopID1, stopName);
             });
-
         }
         len += i;
     }
@@ -326,6 +318,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         Stop stop = response.response.get(i);
                         if (stop.location_type != 0) continue;
 
+                        if (stop.stop_id.contains("-")) {
+                            int end = stop.stop_id.indexOf("-");
+                            stop.stop_id = stop.stop_id.substring(0, end);
+                        }
                         if (stop.stop_id.contains("_")) {
                             int end = stop.stop_id.indexOf("_");
                             stop.stop_id = stop.stop_id.substring(0, end);
@@ -406,6 +402,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
 }
 
+@SuppressWarnings("ALL")
 @JsonObject
 class Stop {
 
