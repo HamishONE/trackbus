@@ -213,8 +213,16 @@ public class FavouritesActivity extends BaseActivity implements NavigationView.O
 
         @Override
         public @NonNull View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView = inflater.inflate(R.layout.favourites_row_layout, parent, false);
+
+            View rowView;
+            if (convertView != null) {
+                rowView = convertView;
+            }
+            else {
+                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                assert inflater != null;
+                rowView = inflater.inflate(R.layout.favourites_row_layout, parent, false);
+            }
 
             TextView stopID = rowView.findViewById(R.id.stop_number);
             TextView stopName = rowView.findViewById(R.id.stop_name);

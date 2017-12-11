@@ -1,9 +1,9 @@
 package local.hamish.trackbus;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -35,10 +35,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -47,7 +45,6 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -129,12 +126,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         // Setup update button
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                updateData(false);
-            }
-        });
+        fab.setOnClickListener(view -> updateData(false));
 
         if (Util.findStopType(stopName) == Util.StopType.BUS) {
             mViewPager.setCurrentItem(1, false); // Show new data first for buses
@@ -173,30 +165,27 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         AlertDialog.Builder builder = new AlertDialog.Builder(serviceBoardActivity);
         builder.setTitle("Select timeframe");
-        builder.setItems(longNames, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+        builder.setItems(longNames, (dialog, which) -> {
 
-                SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd", Locale.US);
-                GregorianCalendar gc = new GregorianCalendar();
+            SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd", Locale.US);
+            GregorianCalendar gc = new GregorianCalendar();
 
-                switch (choice.values()[which]) {
-                    case DATE:
-                        pickDate(serviceBoardActivity);
-                        return;
-                    case TOMORROW:
-                        gc.add(Calendar.DATE, 1);
-                    case TODAY:
-                        oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
-                        break;
-                    case LIVE:
-                        oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
-                }
-
-                TextView tv = findViewById(R.id.tv_history_selector);
-                tv.setText(shortNames[which]);
-                updateData(false);
+            switch (choice.values()[which]) {
+                case DATE:
+                    pickDate(serviceBoardActivity);
+                    return;
+                case TOMORROW:
+                    gc.add(Calendar.DATE, 1);
+                case TODAY:
+                    oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, df.format(gc.getTime()));
+                    break;
+                case LIVE:
+                    oldApiBoard = new TraditionalApiBoard(serviceBoardActivity, stopID);
             }
+
+            TextView tv = findViewById(R.id.tv_history_selector);
+            tv.setText(shortNames[which]);
+            updateData(false);
         });
         builder.show();
     }
@@ -214,22 +203,19 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         DatePickerDialog dpd = new DatePickerDialog(this,
-                new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                (view, year, monthOfYear, dayOfMonth) -> {
 
-                        mYear = year;
-                        mMonth = monthOfYear;
-                        mDay = dayOfMonth;
+                    mYear = year;
+                    mMonth = monthOfYear;
+                    mDay = dayOfMonth;
 
-                        TextView tv = findViewById(R.id.tv_history_selector);
-                        String dateNice = String.format(Locale.US, "%d/%d/%d", dayOfMonth, monthOfYear + 1, year);
-                        tv.setText(dateNice);
+                    TextView tv = findViewById(R.id.tv_history_selector);
+                    String dateNice = String.format(Locale.US, "%d/%d/%d", dayOfMonth, monthOfYear + 1, year);
+                    tv.setText(dateNice);
 
-                        String dateStr = String.format(Locale.US, "%d%02d%02d", year, (monthOfYear + 1), dayOfMonth);
-                        oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, dateStr);
-                        updateData(false);
-                    }
+                    String dateStr = String.format(Locale.US, "%d%02d%02d", year, (monthOfYear + 1), dayOfMonth);
+                    oldApiBoard = new ScheduledApiBoard(serviceBoardActivity, stopID, dateStr);
+                    updateData(false);
                 }, mYear, mMonth, mDay);
         dpd.show();
     }
@@ -325,7 +311,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         boolean incStops = true;
         if (b.length > 0) incStops = b[0];
 
-        ListView mListView = (ListView) findViewById(R.id.new_list);
+        ListView mListView = findViewById(R.id.new_list);
         mListView.setAdapter(new CustomArrayAdapter(this, new String[out.size()])); //todo: listArray is just blank!
 
         // Remove loading bars
@@ -335,28 +321,22 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         // Open tracker on item click if location available
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (out.get(position).stopsAway.length() == 0) {
-                    Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
-                } else {
-                    callTracker(out.get(position).trip, out.get(position).stopSequence,
-                            out.get(position).route, out.get(position).dateScheduled);
-                }
+        mListView.setOnItemClickListener((parent, view, position, id) -> {
+            if (out.get(position).stopsAway.length() == 0) {
+                Toast.makeText(getApplicationContext(), "Location not available", Toast.LENGTH_LONG).show();
+            } else {
+                callTracker(out.get(position).trip, out.get(position).stopSequence,
+                        out.get(position).route, out.get(position).dateScheduled);
             }
         });
 
         // Add routes to favourites on long click
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String route = out.get(pos).route;
-                Util.changeFavRoute(getApplicationContext(), route);
-                produceView();
-                produceViewOld();
-                return true;
-            }
+        mListView.setOnItemLongClickListener((arg0, arg1, pos, id) -> {
+            String route = out.get(pos).route;
+            Util.changeFavRoute(getApplicationContext(), route);
+            produceView();
+            produceViewOld();
+            return true;
         });
     }
 
@@ -384,28 +364,22 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         }
 
         String[] fake = new String[oldApiBoard.items.size()];
-        ListView mListView = (ListView) findViewById(R.id.old_list);
+        ListView mListView = findViewById(R.id.old_list);
         mListView.setAdapter(new OldArrayAdapter(this, fake));
 
         // Open tracker on item click if location available
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String message = "Location not available from " + getResources().getString(R.string.old_data_name);
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
+        mListView.setOnItemClickListener((parent, view, position, id) -> {
+            String message = "Location not available from " + getResources().getString(R.string.old_data_name);
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
         });
 
         // Add routes to favourites on long click
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String route = oldApiBoard.items.get(pos).route;
-                Util.changeFavRoute(getApplicationContext(), route);
-                produceView();
-                produceViewOld();
-                return true;
-            }
+        mListView.setOnItemLongClickListener((arg0, arg1, pos, id) -> {
+            String route = oldApiBoard.items.get(pos).route;
+            Util.changeFavRoute(getApplicationContext(), route);
+            produceView();
+            produceViewOld();
+            return true;
         });
     }
 
@@ -485,8 +459,15 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
 
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
+            View rowView;
+            if (convertView != null) {
+                rowView = convertView;
+            }
+            else {
+                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                assert inflater != null;
+                rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
+            }
 
             if (oldApiBoard.items == null) {
                 return rowView;
@@ -543,13 +524,21 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         @Override
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
 
-            TextView route = ((TextView) rowView.findViewById(R.id.col1));
-            TextView scheduled = ((TextView) rowView.findViewById(R.id.col2));
-            TextView dueTime = ((TextView) rowView.findViewById(R.id.col3));
-            TextView stopsAway = ((TextView) rowView.findViewById(R.id.col4));
+            View rowView;
+            if (convertView != null) {
+                rowView = convertView;
+            }
+            else {
+                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                assert inflater != null;
+                rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
+            }
+
+            TextView route = rowView.findViewById(R.id.col1);
+            TextView scheduled = rowView.findViewById(R.id.col2);
+            TextView dueTime = rowView.findViewById(R.id.col3);
+            TextView stopsAway = rowView.findViewById(R.id.col4);
 
             route.setText(out.get(position).route);
             scheduled.setText(out.get(position).schTime);
@@ -570,7 +559,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             }
 
             // Check if route is in database and if so show heart icon
-            ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
+            ImageView imageView = rowView.findViewById(R.id.icon);
             String routeName = out.get(position).route;
             String vehicle_id = out.get(position).vehicle_id;
 
@@ -622,7 +611,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         public static final String ARG_OBJECT = "object";
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_new_api, container, false);
             //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
@@ -635,7 +624,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         public static final String ARG_OBJECT = "object";
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             final View rootView = inflater.inflate(R.layout.fragment_old_api, container, false);
             //Bundle args = getArguments();
 
@@ -669,21 +658,19 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         public static final String ARG_OBJECT = "object";
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_all_buses, container, false);
             //Bundle args = getArguments();
             //((TextView) rootView.findViewById(R.id.header)).setText(Integer.toString(args.getInt(ARG_OBJECT)));
 
             // Setup map
-            ((com.google.android.gms.maps.MapFragment) getActivity().getFragmentManager().findFragmentById(R.id.map))
-                    .getMapAsync(new OnMapReadyCallback() {
-                @Override
-                public void onMapReady(GoogleMap googleMap) {
-                    map = googleMap;
-                    Util.setupMap(getActivity(), map);
-                }
+            Activity activity = getActivity();
+            assert activity != null;
+            android.app.FragmentManager fm = activity.getFragmentManager();
+            ((com.google.android.gms.maps.MapFragment) fm.findFragmentById(R.id.map)).getMapAsync(googleMap -> {
+                map = googleMap;
+                Util.setupMap(getActivity(), map);
             });
-
 
             return rootView;
         }
