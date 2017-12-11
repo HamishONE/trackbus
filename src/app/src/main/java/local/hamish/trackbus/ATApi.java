@@ -99,24 +99,34 @@ class ATApi {
 
     static boolean isDoubleDecker(String vehicle) {
 
-        // List from: github.com/consindo/dymajo-transit/blob/master/server/realtime.js
+        // List from: https://github.com/consindo/waka/blob/master/server-worker/realtime/nz-akl.js
         List<String> doubleDeckers = Arrays.asList(
-
-            // NZ Bus (ADL Enviro500)
+            // NZ Bus / Metrolink
+            // Alexander Dennis Enviro500
             "3A99", "3A9A", "3A9B", "3A9C", "3A9D", "3A9E", "3A9F",
             "3AA0", "3AA1", "3AA2", "3AA3", "3AA4", "3AA5", "3AA6",
             "3AA7", "3AA8", "3AA9", "3AAA", "3AAB", "3AAC", "3AAD",
             "3AAE", "3AAF",
 
-            // Howick and Eastern (ADL Enviro500)
+            // BCI CitiRider
+            "3BC4", "3BC5", "3BC6", "3BC7", "3BC8", "3BC9", "3BCA",
+            "3BCB", "3BCC", "3BCD", "3BCE", "3BCF", "3BD0", "3BD1",
+            "3BD2",
+            //Birkenhead Transport
+            //Alexander Dennis Enviro500
+            "5258", "5259", "525A", "525B", "525C", "525D",
+
+            // Howick and Eastern
+            // More Enviro500
             "5FB4", "5FB5", "5FB6", "5FB7", "5FB8", "5FB9", "5FBA",
             "5FBB", "5FBC", "5FBD", "5FBE", "5FBF", "5FC0", "5FC1",
             "5FC2",
 
-            // Ritchies/NEX (BCI CityRider FBC6123BRZ)
+            //NEX BCI CitiRider FBC6123BRZ 1050-1074
             "5622", "5623", "5624", "5625", "5626", "5627", "5628",
             "5629", "562A", "562B", "562C", "562D", "562E", "562F",
-            "5630"
+            "5630", "5631", "5632", "5633", "5634", "5635", "5636",
+            "5637", "5638", "5639", "563A"
         );
         return doubleDeckers.contains(vehicle);
     }
