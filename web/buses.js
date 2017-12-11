@@ -110,9 +110,9 @@ function getData() {
 	
 	// Make AJAX request
 	$.getJSON(
-			//apiRoot + locationsUrl + getAuthorization() + '&callback=?'	// Public use this
+			apiRoot + locationsUrl + getAuthorization() + '&callback=?'	// Public use this
 			//"../buffer?api=vehiclelocations"								// Doesn't have occupancy status
-			"../buffer?api=realtime"
+			//"../buffer?api=realtime"
 			//"../fake_api/combined.json"
 			//"../fake_api/vehiclelocations_v2.json"
 	, function(data){
