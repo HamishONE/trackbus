@@ -469,10 +469,6 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                 rowView = inflater.inflate(R.layout.board_row_layout, parent, false);
             }
 
-            if (oldApiBoard.items == null) {
-                return rowView;
-            }
-
             TextView route = rowView.findViewById(R.id.col1);
             TextView headsign = rowView.findViewById(R.id.col2);
             TextView scheduled = rowView.findViewById(R.id.col3);
@@ -504,6 +500,10 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
             ImageView imageView = rowView.findViewById(R.id.icon);
             if (Util.isFavouriteRoute(getApplicationContext(), item.route)) {
                 imageView.setImageResource(R.drawable.heart_icon_pink);
+                imageView.setVisibility(View.VISIBLE);
+            }
+            else {
+                imageView.setVisibility(View.INVISIBLE);
             }
 
             return rowView;
@@ -565,8 +565,14 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
             if (Util.isFavouriteRoute(getApplicationContext(), routeName)) {
                 imageView.setImageResource(R.drawable.heart_icon_pink);
-            } else if (ATApi.isDoubleDecker(vehicle_id)) {
+                imageView.setVisibility(View.VISIBLE);
+            }
+            else if (ATApi.isDoubleDecker(vehicle_id)) {
                 imageView.setImageResource(R.drawable.double_decker_bus);
+                imageView.setVisibility(View.VISIBLE);
+            }
+            else {
+                imageView.setVisibility(View.INVISIBLE);
             }
 
             return rowView;
