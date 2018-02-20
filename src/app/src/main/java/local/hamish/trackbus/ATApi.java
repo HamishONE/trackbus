@@ -157,6 +157,10 @@ class ATApi {
                 Arrays.asList(
                         new StopType(7144, "2 Symonds St"),
                         new StopType(7146, "4 Symonds St")
+                ),
+                Arrays.asList(
+                        new StopType(7166, "150 Symonds St [1]"),
+                        new StopType(7168, "150 Symonds St [2]")
                 )
         );
 
