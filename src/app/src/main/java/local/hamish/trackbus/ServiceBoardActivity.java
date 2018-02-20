@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Locale;
 
 public class ServiceBoardActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener,
@@ -69,6 +70,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private boolean firstTime = true;
     RecentStops recentStops;
     private boolean active = true;
+    private List<Integer> stopGroup;
 
     // Helper objects
     private AdvancedApiBoard newApiBoard;
@@ -155,6 +157,8 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         final ServiceBoardActivity serviceBoardActivity = this;
         RelativeLayout rl = findViewById(R.id.layout_history_selector);
         rl.setOnClickListener(this);
+
+        stopGroup = ATApi.getStopGroup(Integer.valueOf(stopID));
     }
 
     @Override // Press on live/scheduled selector box
@@ -249,6 +253,32 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
         return true;
     }
 
+    /**
+     * Gets called every time the user presses the menu button.
+     * Use if your menu is dynamic.
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        myMenu = menu;
+        menu.clear();
+
+        getMenuInflater().inflate(R.menu.menu_service_board, menu);
+        changeHeartIcon();
+
+        if (stopGroup != null) {
+            int i = 2;
+            for (int stop : stopGroup) {
+                if (stop != Integer.valueOf(stopID)) {
+                    menu.add(0, i++, Menu.NONE, "Goto stop " + stop);
+                }
+            }
+        }
+
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    /*
     @Override // Loads menu bar
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -268,14 +298,34 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
                     actionTerminatingSwitch.setVisible(showTerminatingSwitch);
                 }
             });
-        */
+        *
 
         return true;
     }
+    */
 
     @Override // Responds to action bar selection
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+
+        int itemID = item.getItemId();
+
+        if (itemID >= 2) {
+            int i = 2;
+            for (int stop : stopGroup) {
+                if (stop != Integer.valueOf(stopID)) {
+                    if (i++ == itemID) {
+                        //Toast.makeText(this, "Now goto stop " + stop, Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(this, ServiceBoardActivity.class);
+                        intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(stop));
+                        intent.putExtra(MainActivity.EXTRA_STOP_NAME, "Stop " + stop); // todo: get real name
+                        startActivity(intent);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        switch (itemID) {
             case R.id.action_favourites:
                 changeFavourite();
                 return true;

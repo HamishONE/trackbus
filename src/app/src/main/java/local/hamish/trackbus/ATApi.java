@@ -3,6 +3,7 @@ package local.hamish.trackbus;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -129,6 +130,25 @@ class ATApi {
             "5637", "5638", "5639", "563A"
         );
         return doubleDeckers.contains(vehicle);
+    }
+
+    /**
+     Returns List of stops in direction of bus travel
+     */
+    @Nullable
+    static List<Integer> getStopGroup(int stopID) {
+
+        List<List<Integer>> stopGroups = Arrays.asList(
+                Arrays.asList(7148, 7150, 7152), // Symonds/Wellesley
+                Arrays.asList(7144, 7146) // Symonds/Alten
+        );
+
+        for (List<Integer> stopGroup : stopGroups) {
+            if (stopGroup.contains(stopID)) {
+                return stopGroup;
+            }
+        }
+        return null;
     }
 
     // Returns string to append to api call
