@@ -70,7 +70,7 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
     private boolean firstTime = true;
     RecentStops recentStops;
     private boolean active = true;
-    private List<Integer> stopGroup;
+    private List<ATApi.StopType> stopGroup;
 
     // Helper objects
     private AdvancedApiBoard newApiBoard;
@@ -268,9 +268,9 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         if (stopGroup != null) {
             int i = 2;
-            for (int stop : stopGroup) {
-                if (stop != Integer.valueOf(stopID)) {
-                    menu.add(0, i++, Menu.NONE, "Goto stop " + stop);
+            for (ATApi.StopType stop : stopGroup) {
+                if (stop.stopID != Integer.valueOf(stopID)) {
+                    menu.add(0, i++, Menu.NONE, "Goto " + stop.stopName);
                 }
             }
         }
@@ -311,13 +311,12 @@ public class ServiceBoardActivity extends BaseActivity implements NavigationView
 
         if (itemID >= 2) {
             int i = 2;
-            for (int stop : stopGroup) {
-                if (stop != Integer.valueOf(stopID)) {
+            for (ATApi.StopType stop : stopGroup) {
+                if (stop.stopID != Integer.valueOf(stopID)) {
                     if (i++ == itemID) {
-                        //Toast.makeText(this, "Now goto stop " + stop, Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(this, ServiceBoardActivity.class);
-                        intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(stop));
-                        intent.putExtra(MainActivity.EXTRA_STOP_NAME, "Stop " + stop); // todo: get real name
+                        intent.putExtra(MainActivity.EXTRA_STOP, String.valueOf(stop.stopID));
+                        intent.putExtra(MainActivity.EXTRA_STOP_NAME, stop.stopName);
                         startActivity(intent);
                         return true;
                     }

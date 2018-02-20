@@ -132,20 +132,39 @@ class ATApi {
         return doubleDeckers.contains(vehicle);
     }
 
+    static class StopType {
+        final int stopID;
+        final String stopName;
+
+        StopType(int stopID, String stopName) {
+            this.stopID = stopID;
+            this.stopName = stopName;
+        }
+    }
+
     /**
      Returns List of stops in direction of bus travel
      */
     @Nullable
-    static List<Integer> getStopGroup(int stopID) {
+    static List<StopType> getStopGroup(int stopID) {
 
-        List<List<Integer>> stopGroups = Arrays.asList(
-                Arrays.asList(7148, 7150, 7152), // Symonds/Wellesley
-                Arrays.asList(7144, 7146) // Symonds/Alten
+        List<List<StopType>> stopGroups = Arrays.asList(
+                Arrays.asList(
+                        new StopType(7148, "36 Symonds St"),
+                        new StopType(7150, "38 Symonds St"),
+                        new StopType(7152, "44 Symonds St")
+                ),
+                Arrays.asList(
+                        new StopType(7144, "2 Symonds St"),
+                        new StopType(7146, "4 Symonds St")
+                )
         );
 
-        for (List<Integer> stopGroup : stopGroups) {
-            if (stopGroup.contains(stopID)) {
-                return stopGroup;
+        for (List<StopType> stopGroup : stopGroups) {
+            for (StopType stop : stopGroup) {
+                if (stop.stopID == stopID) {
+                    return stopGroup;
+                }
             }
         }
         return null;
