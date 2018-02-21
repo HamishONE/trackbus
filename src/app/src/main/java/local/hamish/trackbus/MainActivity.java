@@ -148,7 +148,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     public GoogleMap.OnCameraIdleListener getCameraChangeListener() {
         return () -> {
             float zoom = map.getCameraPosition().zoom;
-            if (zoom < 14) {
+            if (zoom < 15.2) {
                 if (isVisible) {
                     for (int i = 0; i < len; i++) {stopMarkers[i].setVisible(false);}
                     isVisible = false;
